@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { createSurroundings } from './surroundings.js';
 import {buildPrimitive,fitModel} from './primitives.js';
 import {buildBuiltins} from './builtins.js';
+import {createRealistic} from './realistic.js';
 import { createShell, planShape } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk} from './walk.js';
@@ -15,6 +17,11 @@ export function mount(home, target=document.body) {
   target.innerHTML = markup(home);
   const get=id=>target.querySelector(`#${id}`);
   let focusRoom=()=>{};
+  // Realistic draws only when something changed: camera moves are detected per frame,
+  // everything else calls invalidate().
+  let dirty=true;
+  const invalidate=()=>{dirty=true;if(renderer)renderer.shadowMap.needsUpdate=true;};
+  THREE.DefaultLoadingManager.onProgress=invalidate;
   // A 3D tab in the URL selects its stage before the furniture group exists.
   let furnitureBuilt=false;
   const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&applyStage());
@@ -33,11 +40,11 @@ export function mount(home, target=document.body) {
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.shadowMap.enabled=true;
-  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type=THREE.PCFShadowMap;  // PCFSoft is gone in r186; PCF is already soft.
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=theme.light.exposure;
   host.append(renderer.domElement);
-  const walk=createWalk(model,renderer.domElement);
+  const walk=createWalk(model,renderer.domElement,scene,()=>invalidate());
   const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,500);
   const controls=new OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true; controls.dampingFactor=.08;
@@ -53,7 +60,7 @@ export function mount(home, target=document.body) {
   const sun=new THREE.DirectionalLight(light.sun,light.intensity);
   sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
   Object.assign(sun.shadow.camera,{left:-span,right:span,top:span,bottom:-span,near:.1,far:span*6});
-  sun.shadow.bias=-.0004;sun.shadow.normalBias=.025;sun.shadow.radius=4;
+  sun.shadow.bias=-.0001;sun.shadow.normalBias=.02;sun.shadow.radius=4;
   sun.target.position.copy(center);scene.add(sun,sun.target);
   const fill=new THREE.DirectionalLight(light.fill,.7);
   fill.position.copy(center).add(new THREE.Vector3(span,span/2,-span));scene.add(fill);
@@ -106,7 +113,7 @@ export function mount(home, target=document.body) {
   }
   function select(id) {
     const room=model.rooms.find(r=>r.id===id);
-    selected=room?.id || null;shell.select(selected);
+    selected=room?.id || null;shell.select(selected);invalidate();
     for(const [key,button] of buttons){button.classList.toggle('active',key===selected);button.setAttribute('aria-pressed',String(key===selected));}
     for(const [key,label] of labels)label.classList.toggle('active',key===selected);
     if(room) {
@@ -135,39 +142,61 @@ export function mount(home, target=document.body) {
   function updateHeight() {
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     shell.setWallHeight(height,mode==='walk');get('height-output').value=`${height.toFixed(2)} m`;
-    updateFurniture();updateDoors();
+    updateFurniture();updateDoors();invalidate();
     get('wall-height').disabled=mode==='walk';
   }
   // Walls (and their door leaves) are rebuilt on every height change.
   function updateDoors() {
     const closed=get('doors-closed').checked;
-    shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});
+    shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});invalidate();
   }
   function setMode(value) {
     if(!['orbit','walk'].includes(value))return;
     mode=value;transition=null;controls.enabled=mode!=='walk';
-    ceiling.visible=mode==='walk';
+    ceiling.visible=mode==='walk';updateBackdrop();invalidate();
     walk.setActive(mode==='walk');
     get('labels').hidden=mode==='walk'||!get('labels-toggle').checked;
     get('labels-toggle').disabled=mode==='walk';
     target.querySelector('.zoom-controls').hidden=mode==='walk';get('mouse-look').hidden=mode!=='walk';get('top-view').hidden=mode==='walk';
     get('full-height').disabled=mode==='walk';
-    get('navigation-help').textContent=mode==='walk'?'WASD to move · Drag to look · Mouse look + Esc to release':'Drag to orbit · Scroll to zoom · Right-drag to pan';
+    get('navigation-help').textContent=mode==='walk'?'Click the floor to walk · Drag to look · WASD / arrows to move · Q E to turn · Scroll to step':'Drag to orbit · Scroll to zoom · Right-drag to pan';
     target.querySelector('.viewport').classList.toggle('walking',mode==='walk');
     for(const key of ['orbit','walk']) {get(`${key}-button`).classList.toggle('active',mode===key);get(`${key}-button`).setAttribute('aria-pressed',String(mode===key));}
     updateHeight();select(selected);
+    // Keep the mode in the URL (?mode=3d or ?mode=walk) next to ?tab=, for sharing a view.
+    const url=new URL(location.href);url.searchParams.set('mode',mode==='walk'?'walk':'3d');
+    if(mode!=='walk')url.searchParams.delete('cam');
+    try{history.replaceState(null,'',url);}catch{/* Some file:// viewers disallow history updates. */}
   }
+  // Walk mode looks out at a generated city under a gradient sky; the overview keeps the
+  // plain paper background and ground.
+  const surroundings=createSurroundings({center,span,storey:home.storey ?? 3});scene.add(surroundings.group);
+  function updateBackdrop() {
+    const outside=mode==='walk';
+    surroundings.group.visible=outside;ground.visible=!outside;scene.fog=outside?surroundings.fog:null;
+    surroundings.setNight(lighting==='night');invalidate();
+  }
+  // Day: the theme's soft daylight. Night: faint cool moonlight, a dark sky, lamps on.
+  let lighting='day';
   function setLighting(value) {
-    const late=value==='afternoon';
-    sun.position.copy(center).add(new THREE.Vector3(...(late?[-1.2,.6,.8]:light.position.map(v=>v/14))).multiplyScalar(span));
-    sun.color.set(late?'#ffd5a0':light.sun);sun.intensity=late?3.6:light.intensity;
-    ambient.intensity=late?1.8:light.ambient;
-    get('lighting').value=value;
+    lighting=value==='night'?'night':'day';const night=lighting==='night';
+    sun.position.copy(center).add(new THREE.Vector3(...(night?[.5,1.4,-.4]:light.position.map(v=>v/14))).multiplyScalar(span));
+    sun.color.set(night?'#9fb3ff':light.sun);sun.intensity=night?.25:light.intensity;
+    ambient.color.set(night?'#3a4766':light.sky);ambient.groundColor.set(night?'#1c1d24':light.bounce);
+    ambient.intensity=night?.7:light.ambient;fill.intensity=night?.05:.7;
+    get('light-day').setAttribute('aria-pressed',String(!night));get('light-night').setAttribute('aria-pressed',String(night));
+    realistic.setNight(night);realistic.relight();updateBackdrop();invalidate();
   }
   get('orbit-button').onclick=()=>setMode('orbit');
   // Camera presets move the camera once; room focus reuses the last one. Reset also clears the room.
   get('top-view').onclick=()=>{view='top';select(selected);};
   get('walk-button').onclick=()=>setMode('walk');get('mouse-look').onclick=()=>walk.lock();
+  // While the mouse is captured, the button shows it is on and how to get out.
+  document.addEventListener('pointerlockchange',()=>{
+    const locked=document.pointerLockElement===renderer.domElement,button=get('mouse-look');
+    button.setAttribute('aria-pressed',String(locked));button.textContent=locked?'Mouse look on · Press Esc to exit':'Mouse look ↗';
+    get('lock-hint').hidden=!locked;
+  });
   get('reset-camera').onclick=()=>{view='iso';select(null);};get('reset-room').onclick=()=>select(null);
   function zoomBy(factor) {
     // Finish a room-focus move first, so zooming preserves its intended target.
@@ -180,15 +209,14 @@ export function mount(home, target=document.body) {
   }
   get('zoom-in').onclick=()=>zoomBy(1.25);get('zoom-out').onclick=()=>zoomBy(1/1.25);
   get('labels-toggle').onchange=e=>get('labels').hidden=!e.target.checked;
-  get('openings-toggle').onchange=e=>shell.openings.visible=e.target.checked;
   // Door leaves are drawn open; closing them is visual only (Walk still passes through).
   get('doors-closed').onchange=()=>updateDoors();
   get('reset-settings').onclick=()=>{
-    for(const [id,checked] of [['labels-toggle',true],['openings-toggle',true],['doors-closed',false]]) {
+    for(const [id,checked] of [['labels-toggle',true],['doors-closed',false]]) {
       get(id).checked=checked;get(id).dispatchEvent(new Event('change'));
     }
     get('wall-height').value=model.cutaway;updateHeight();
-    get('lighting').value=home.lighting || 'daylight';get('lighting').dispatchEvent(new Event('change'));
+    setLighting(home.lighting || 'day');
   };
   // Placed items: library models (each file loads once, cloned per placement, fitted to
   // the inventory row's Dims and tinted toward its Colour) or primitives built from Dims.
@@ -197,7 +225,7 @@ export function mount(home, target=document.body) {
   const loader=new GLTFLoader(),sources=new Map();
   const furnitureReady=Promise.allSettled((home.placements || []).map(async placement=>{
     let object;
-    if(placement.model.startsWith('@'))object=buildPrimitive(placement.model.slice(1),placement.dims,placement.colour);
+    if(placement.model.startsWith('@'))object=buildPrimitive(placement.model.slice(1),placement.dims,placement.colour,placement.art);
     else {
       if(!sources.has(placement.modelUrl))sources.set(placement.modelUrl,loader.loadAsync(placement.modelUrl));
       object=fitModel((await sources.get(placement.modelUrl)).scene.clone(true),placement.dims,placement.colour);
@@ -205,33 +233,57 @@ export function mount(home, target=document.body) {
     object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
     object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
     object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
-    object.userData.placement=placement;furniture.add(object);updateFurniture();
+    object.userData.placement=placement;furniture.add(object);updateFurniture();realistic.addMirrors();
   })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
+  // Realistic-tab models (inventory Realistic column) load the first time that tab opens.
+  const photoFurniture=new THREE.Group();photoFurniture.name='Furniture (realistic)';
+  photoFurniture.position.y=furniture.position.y;scene.add(photoFurniture);
+  let photoLoading=null;
+  function loadPhotoFurniture() {
+    photoLoading??=Promise.allSettled((home.placements || []).filter(p=>p.realisticUrl).map(async placement=>{
+      if(!sources.has(placement.realisticUrl))sources.set(placement.realisticUrl,loader.loadAsync(placement.realisticUrl));
+      const object=fitModel((await sources.get(placement.realisticUrl)).scene.clone(true),placement.dims,placement.colour);
+      object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
+      object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
+      object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
+      object.userData.placement=placement;photoFurniture.add(object);updateFurniture();
+    }));
+    return photoLoading;
+  }
   furnitureBuilt=true;
   // Shell is the plain model; Fit-out and Furnished add finishes and built-ins from fitout.json.
   const builtins=buildBuiltins(home.fitout || {});builtins.position.y=furniture.position.y;scene.add(builtins);
+  const photoBuiltins=buildBuiltins(home.fitout || {},true);photoBuiltins.position.y=furniture.position.y;scene.add(photoBuiltins);
+  // Tab 6: the furnished home with realistic lighting, materials and post-processing.
+  const realistic=createRealistic({renderer,scene,home,lights:{ambient,sun,fill}});
   function applyStage() {
-    shell.setFinishes(ui.stage==='shell'?null:home.fitout || null);
+    const photo=ui.stage==='realistic';
+    if(photo)loadPhotoFurniture();
+    invalidate();
+    shell.setFinishes(ui.stage==='shell'?null:home.fitout || null,photo);
+    realistic.enable(photo);
     updateFurniture();
   }
   applyStage();
   // Shell shows no items, Fit-out adds built-in fixtures, Furnished adds everything.
   // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
   function updateFurniture() {
+    invalidate();
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     for(const object of furniture.children) {
       const placement=object.userData.placement;
       const kind=(home.inventory || []).find(a=>a.name===placement.asset&&a.room===placement.room)?.kind;
-      const staged=ui.stage==='furnished'||(ui.stage==='fitout'&&kind==='fixture');
-      object.visible=staged&&(placement.y || 0)<height;
+      const staged=ui.stage==='furnished'||ui.stage==='realistic'||(ui.stage==='fitout'&&kind==='fixture');
+      object.visible=staged&&(placement.y || 0)<height&&!(ui.stage==='realistic'&&placement.realisticUrl);
     }
+    for(const object of photoFurniture.children)object.visible=ui.stage==='realistic'&&(object.userData.placement.y || 0)<height;
     // Built-ins belong to Fit-out; wall cabinets above the cut hide with the wall.
-    builtins.visible=ui.stage!=='shell';
-    builtins.traverse(o=>{if(o.isMesh)o.visible=o.userData.bottom<height;});
+    builtins.visible=ui.stage==='fitout'||ui.stage==='furnished';photoBuiltins.visible=ui.stage==='realistic';
+    for(const group of [builtins,photoBuiltins])group.traverse(o=>{if(o.isMesh)o.visible=o.userData.bottom<height;});
   }
   get('wall-height').oninput=updateHeight;
   get('full-height').onclick=()=>{get('wall-height').value=model.wallHeight;setMode('orbit');};
-  get('lighting').onchange=e=>setLighting(e.target.value);
+  get('light-day').onclick=()=>setLighting('day');get('light-night').onclick=()=>setLighting('night');
   controls.addEventListener('start',()=>transition=null);
   const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();let pointerDown;
   renderer.domElement.addEventListener('pointerdown',e=>pointerDown={x:e.clientX,y:e.clientY});
@@ -244,7 +296,7 @@ export function mount(home, target=document.body) {
   });
   function resize() {
     const {width,height}=host.getBoundingClientRect();if(!width || !height)return;
-    renderer.setSize(width,height);
+    renderer.setSize(width,height);realistic.setSize(width,height);invalidate();
     walk.camera.aspect=width/height;walk.camera.updateProjectionMatrix();
     const aspect=width/height,half=Math.max(span*.63,span*.7/aspect);
     camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();
@@ -257,7 +309,7 @@ export function mount(home, target=document.body) {
     const dt=(now-previousTime)/1000;previousTime=now;
     walk.setActive(mode==='walk'&&ui.in3d&&!target.querySelector('dialog[open]')&&!document.hidden);
     if(!ui.in3d)return;
-    if(mode==='walk'){walk.update(dt);renderer.render(scene,walk.camera);return;}
+    if(mode==='walk'){walk.update(dt);shareWalkView(now);draw(walk.camera);return;}
     if(transition) {
       const t=Math.min((now-transition.start)/(matchMedia('(prefers-reduced-motion: reduce)').matches?1:650),1),ease=1-(1-t)**3;
       camera.position.lerpVectors(transition.fromPosition,transition.toPosition,ease);
@@ -278,11 +330,36 @@ export function mount(home, target=document.body) {
     get('zoom-output').value=`${Math.round(camera.zoom*100)}%`;
     get('zoom-in').disabled=camera.zoom>=controls.maxZoom-.001;
     get('zoom-out').disabled=camera.zoom<=controls.minZoom+.001;
-    renderer.render(scene,camera);
+    draw(camera);
   }
-  updateHeight();setLighting(home.lighting || 'daylight');select(null);frame=requestAnimationFrame(render);
+  const lastView=new THREE.Matrix4(),lastProjection=new THREE.Matrix4();
+  // While walking, the URL follows the camera (at most twice a second) so it can be shared.
+  let lastShared=0,sharedView='';
+  function shareWalkView(now) {
+    if(now-lastShared<500)return;lastShared=now;
+    const c=walk.camera,e=new THREE.Euler().setFromQuaternion(c.quaternion,'YXZ');
+    const view=[c.position.x.toFixed(2),c.position.z.toFixed(2),THREE.MathUtils.radToDeg(e.y).toFixed(0),THREE.MathUtils.radToDeg(e.x).toFixed(0)].join(',');
+    if(view===sharedView)return;sharedView=view;
+    const url=new URL(location.href);url.searchParams.set('cam',view);
+    try{history.replaceState(null,'',url.href.replaceAll('%2C',','));}catch{/* Some file:// viewers disallow history updates. */}
+  }
+  function draw(view){
+    if(!realistic.on){renderer.render(scene,view);return;}
+    view.updateMatrixWorld();
+    if(!dirty&&lastView.equals(view.matrixWorld)&&lastProjection.equals(view.projectionMatrix))return;
+    dirty=false;lastView.copy(view.matrixWorld);lastProjection.copy(view.projectionMatrix);
+    realistic.render(view);
+  }
+  updateHeight();setLighting(home.lighting || 'day');select(null);frame=requestAnimationFrame(render);
+  // ?mode=walk&cam=x,z,heading,pitch reopens a shared Walk view (heading/pitch in degrees).
+  const params=new URLSearchParams(location.search);
+  if(params.get('mode')==='walk') {
+    setMode('walk');
+    const cam=(params.get('cam') || '').split(',').map(Number);
+    if(cam.length===4&&cam.every(Number.isFinite))walk.place([cam[0],cam[1]],THREE.MathUtils.degToRad(cam[2]),THREE.MathUtils.degToRad(cam[3]));
+  }
   document.body.dataset.modelReady='true';
-  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,builtins,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
+  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,photoFurniture,loadPhotoFurniture,builtins,realistic,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
     dispose(){cancelAnimationFrame(frame);observer.disconnect();walk.dispose();controls.dispose();shell.dispose();ground.geometry.dispose();ground.material.dispose();grid?.geometry.dispose();grid?.material.dispose();renderer.dispose();target.replaceChildren();delete document.body.dataset.modelReady;},
   };
 }

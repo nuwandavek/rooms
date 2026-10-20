@@ -9,8 +9,8 @@ const md=`# Inventory\n\n| Asset | Room | Kind | Qty | Model | Photos | Notes |\
 test('inventory.md tables become assets with resolved rooms and photo paths',()=>{
   const home=applyInventory(starter,md);
   assert.deepEqual(home.inventory,[
-    {name:'Sofa',room:'main',kind:'furniture',qty:1,dims:null,colour:null,model:'sofa-3seat',photos:['assets/living-01.jpg','extra/b.png'],notes:'West wall'},
-    {name:'Lamp',room:'main',kind:'lighting',qty:1,dims:null,colour:null,model:null,photos:[],notes:''},
+    {name:'Sofa',room:'main',kind:'furniture',qty:1,dims:null,colour:null,model:'sofa-3seat',realistic:null,photos:['assets/living-01.jpg','extra/b.png'],notes:'West wall'},
+    {name:'Lamp',room:'main',kind:'lighting',qty:1,dims:null,colour:null,model:null,realistic:null,photos:[],notes:''},
   ]);
   assert.deepEqual(validateHome(home),[]);
   assert.ok(imagePaths(home).includes('assets/living-01.jpg'));

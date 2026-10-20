@@ -65,8 +65,8 @@ export function createShell(model, palette) {
     return result;
   };
   // Finishes (Fit-out and Furnished tabs). Null shows the plain shell.
-  let finishes=null,lastHeight=model.cutaway,lastWalking=false;
-  const finish=id=>id&&finishes ? buildMaterial(id,finishes.materials[id]) : null;
+  let finishes=null,realistic=false,lastHeight=model.cutaway,lastWalking=false;
+  const finish=id=>id&&finishes ? buildMaterial(id,finishes.materials[id],realistic) : null;
   // Which room each side of each wall looks into, sampled every 5 cm along the wall.
   // Local +z of a wall segment points to (-uz, ux) in plan, where u runs from a to b.
   const roomAt=point=>model.rooms.find(r=>insidePolygon(point,r.polygon))?.id ?? null;
@@ -84,6 +84,18 @@ export function createShell(model, palette) {
     return [wall,{plus:runs(1),minus:runs(-1)}];
   }));
   const sideRoom=(runs,t)=>runs.findLast(r=>r.from<=t)?.id ?? null;
+  // Skirting on both faces of a wall: one strip per run of a room that wants it, cut at
+  // floor-level openings (doors, sliders). Local +z is the `plus` side of the wall.
+  function skirting(wall,length,parent) {
+    const k=finishes.skirting,mat=finish(k.material),{plus,minus}=sides.get(wall);
+    const gaps=(wall.openings || []).filter(o=>o.bottom<.05).map(o=>[o.start,o.end]);
+    for(const [runs,sign] of [[plus,1],[minus,-1]])runs.forEach((run,i)=>{
+      if(!run.id||k.except.includes(run.id))return;
+      let pieces=[[run.from,runs[i+1]?.from ?? length]];
+      for(const [g0,g1] of gaps)pieces=pieces.flatMap(([a,b])=>g1<=a||g0>=b?[[a,b]]:[[a,g0],[g1,b]].filter(([x,y])=>y-x>.02));
+      for(const [a,b] of pieces)box(b-a,k.height,k.depth,(a+b)/2,k.height/2,sign*(model.wallThickness/2+k.depth/2),mat,parent);
+    });
+  }
   // A solid wall piece from x0 to x1 along the wall and y0 to y1 up, split where the room
   // on either side changes and at that room's finish bands, each face in its finish.
   function wallPiece(wall,x0,x1,y0,y1,parent) {
@@ -150,6 +162,7 @@ export function createShell(model, palette) {
         cursor=end;
       }
       wallPiece(wall,cursor,length,0,height,solid);
+      if(finishes?.skirting)skirting(wall,length,solid);
     }
     for(const railing of model.railings || []) {
       const group=segment(railing.a,railing.b,openings);
@@ -163,9 +176,10 @@ export function createShell(model, palette) {
   }
   setWallHeight(model.cutaway);
   // Finishes on (an object from finishes.json, via the build) or off (null, the Shell tab).
-  function setFinishes(value) {
-    if(value===finishes)return;
-    finishes=value;
+  // `photo` picks the Realistic tab's physical material variants.
+  function setFinishes(value,photo=false) {
+    if(value===finishes&&photo===realistic)return;
+    finishes=value;realistic=photo;
     for(const floor of floors)floor.userData.originalMaterial=finish(floorFinish(finishes,floor.userData.room.id))
       || materials[floor.userData.room.surface || 'floor'];
     setWallHeight(lastHeight,lastWalking);select(selectedId);

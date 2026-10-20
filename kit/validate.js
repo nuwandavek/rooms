@@ -9,7 +9,8 @@ export function validateHome(home) {
   },0))>.00001;
   require(typeof home?.title==='string'&&home.title.trim(),'title is required');
   require(['riso','almanac','drafting'].includes(home?.theme || 'riso'),'theme must be riso, almanac or drafting');
-  require(['daylight','afternoon'].includes(home?.lighting || 'daylight'),'lighting must be daylight or afternoon');
+  require(['day','night'].includes(home?.lighting || 'day'),'lighting must be day or night');
+  require(home?.storey===undefined||(Number.isInteger(home.storey)&&home.storey>=0&&home.storey<200),'storey must be a whole floor number');
   const photos=value=>Array.isArray(value)&&value.every(p=>typeof p==='string'&&p.length>0);
   require(home?.resources===undefined||Array.isArray(home.resources),'resources must be an array');
   for(const group of (Array.isArray(home?.resources)?home.resources:[]))
@@ -56,5 +57,5 @@ export function validateHome(home) {
 
 export function imagePaths(home) {
   return [...new Set([home.floorPlan?.image,...home.model.rooms.flatMap(r=>[r.photo,...(r.photos || [])]),
-    ...(home.resources || []).flatMap(group=>group.photos),...(home.inventory || []).flatMap(asset=>asset.photos)].filter(Boolean))];
+    ...(home.resources || []).flatMap(group=>group.photos),...(home.inventory || []).flatMap(asset=>asset.photos),...(home.placements || []).map(p=>p.art)].filter(Boolean))];
 }

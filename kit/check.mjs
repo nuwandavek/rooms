@@ -98,14 +98,16 @@ export async function checkProject(name) {
     await page.locator('#labels-toggle').uncheck();
     assert.equal(await page.locator('#labels').isVisible(),false);
     await page.locator('#labels-toggle').check();
-    await page.locator('#openings-toggle').uncheck();
-    await page.locator('#openings-toggle').check();
+    await page.locator('#doors-closed').check();
+    await page.locator('#doors-closed').uncheck();
     await page.locator('#full-height').click();
     assert.equal(await page.locator('#wall-height').inputValue(),String(home.model.wallHeight));
     await page.locator('#wall-height').evaluate((input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));},String(home.model.cutaway));
-    await page.locator('#lighting').selectOption('afternoon');
+    await page.locator('#light-night').click();
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+    assert.equal(await page.locator('#light-night').getAttribute('aria-pressed'),'true');
     await page.screenshot({path:resolve(out,'check-light.png')});
+    await page.locator('#light-day').click();
     await page.locator('#walk-button').click();
     assert.equal(await page.evaluate(()=>window.home3d.camera.isPerspectiveCamera),true);
     assert.ok(Math.abs(await page.evaluate(()=>window.home3d.camera.position.y)-1.665)<.001);
@@ -140,7 +142,7 @@ export async function checkProject(name) {
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Mobile page must not overflow horizontally');
     await page.screenshot({path:resolve(out,'check-mobile.png'),fullPage:true});
     await page.locator('.settings summary').click();
-    await page.locator('#lighting').selectOption('afternoon');
+    await page.locator('#light-night').click();
     await page.locator('#tab-resources').click();
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Mobile resource gallery must not overflow');
     await page.screenshot({path:resolve(out,'check-resources-mobile.png'),fullPage:false});

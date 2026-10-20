@@ -58,11 +58,22 @@ export async function loadProject(name) {
   // Models are looked up by id in library/catalog.json. The files are gitignored and shared
   // separately, so a catalogued model may be absent here. out/index.html is three levels below the repo root.
   const models={},catalog=new Map(parseCatalog(await readFile(resolve(root,'library/catalog.json'),'utf8').catch(()=>'')).map(r=>[r.id,r]));
-  for(const id of new Set([...(home.inventory || []),...(home.placements || [])].map(a=>a.model).filter(m=>m&&!m.startsWith('@')))) {
+  for(const id of new Set([...(home.inventory || []),...(home.placements || [])].flatMap(a=>[a.model,a.realistic]).filter(m=>m&&!m.startsWith('@')))) {
     const entry=catalog.get(id);
     if(!entry)throw new Error(`No model "${id}" in library/catalog.json (referenced in inventory.md or placements.json)`);
     await access(resolve(root,'library',entry.path)).catch(()=>{throw new Error(`Model "${id}" is catalogued but library/${entry.path} is missing; get the library models folder`);});
     models[id]=`../../../library/${entry.path}`;
+  }
+  // Realistic-tab texture sets are gitignored downloads; without them the material keeps
+  // its procedural look. out/index.html is three levels below the repo root.
+  for(const [id,def] of Object.entries(home.fitout?.materials || {})) {
+    if(!def.photo)continue;
+    const name=def.photo.source.split(':')[1];
+    const files={map:'diff',normal:'nor_gl',roughness:'rough'};
+    const urls=Object.fromEntries(Object.entries(files).map(([key,suffix])=>[key,`textures/${name}/${name}_${suffix}_1k.jpg`]));
+    const present=await Promise.all(Object.values(urls).map(path=>access(resolve(root,'library',path)).then(()=>true,()=>false)));
+    if(present.every(Boolean))def.photo.urls=Object.fromEntries(Object.entries(urls).map(([k,v])=>[k,`../../../library/${v}`]));
+    else {console.warn(`Note: textures for ${id} are missing; run node library/tools/textures.mjs`);delete def.photo;}
   }
   // Fitting to Dims is expected; a large stretch usually means the wrong model.
   for(const asset of home.inventory || []) {
@@ -87,7 +98,7 @@ export async function buildProject(name) {
     }
     for(const group of home.resources || [])group.photos=group.photos.map(path=>images[path]);
     for(const asset of home.inventory || []){asset.photos=asset.photos.map(path=>images[path]);asset.modelUrl=models[asset.model] || null;}
-    for(const placement of home.placements || [])placement.modelUrl=models[placement.model];
+    for(const placement of home.placements || []){placement.modelUrl=models[placement.model];if(placement.art)placement.art=images[placement.art];if(placement.realistic)placement.realisticUrl=models[placement.realistic];}
     window.home3d=mount(home);`;
   const result=await build({stdin:{contents:entry,
     resolveDir:root,sourcefile:'home-entry.js',loader:'js'},bundle:true,format:'iife',minify:true,write:false,legalComments:'inline'});

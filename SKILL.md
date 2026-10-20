@@ -36,7 +36,8 @@ Tabs follow the stages: **1 Resources** (floor plan, room galleries, extra photo
 groups), **2 Assets** (inventory), then one shared 3D viewer as **3 Shell**,
 **4 Fit-out** (plus built-ins and finishes; `fixture` rows for now) and **5 Furnished**
 (plus loose items), with room focus, room photographs, and camera/layer/light controls.
-Use `?tab=shell`, `fitout` or `furnished` to open a stage directly. Keep metadata in the collapsible Project details card;
+Use `?tab=shell`, `fitout`, `furnished` or `realistic` to open a stage directly, and
+`&mode=walk` to start in Walk mode. Keep metadata in the collapsible Project details card;
 do not add promotional intro copy or a plan-orientation indicator.
 
 A home supplies data to `mount(home)`. Shared viewer code must not contain a
@@ -116,8 +117,8 @@ dependency on `../../minusx/artifactbin` is required.
 - **Drafting:** cool vellum, cobalt annotations, technical type, crisp framing,
   a subtle ground grid, and cooler neutral materials. Set `theme: 'drafting'` in
   the project; do not fork the viewer.
-- Light presets are illustrative studio choices. “Late afternoon” changes
-  direction, warmth and ambient light; it is not a geolocated solar simulation.
+- Light presets are illustrative studio choices. “Night” swaps the sun for faint
+  moonlight and turns lamps on; it is not a geolocated solar simulation.
   Do not claim true north, a measured light level, or a certified architectural plan.
 - Preserve material meaning across rooms. Use the selected-room treatment for
   interaction, not to imply a different permanent floor finish.
@@ -135,7 +136,8 @@ reusable rendering behavior. The current kit covers architectural shells; it
 does not yet provide a furniture library or multi-storey model. Lighting assumes a roof: an undrawn
 roof slab casts shadows, so sunlight enters only through openings, and Walk mode shows
 a ceiling. Walk mode uses
-a 1.65 m eye-height perspective camera, WASD, drag or pointer-lock look, and
+a 1.65 m eye-height perspective camera, click-to-walk with a floor ring, grab-style
+drag to look, WASD/arrows/Q-E/scroll, optional pointer-lock look, and
 plan-based wall/doorway collision in `kit/walk.js`. Keep its geometry checks when
 changing openings or coordinates. Switching tabs or opening dialogs stops movement.
 

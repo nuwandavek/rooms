@@ -8,9 +8,9 @@ const groove=new THREE.MeshStandardMaterial({color:'#2b2a28',roughness:.8});
 const steel=new THREE.MeshStandardMaterial({color:'#b8bcbf',roughness:.25,metalness:.8});
 const plain=new THREE.MeshStandardMaterial({color:'#e8e3da',roughness:.7});
 
-export function buildBuiltins(fitout) {
-  const group=new THREE.Group();group.name='Built-ins';
-  const material=id=>id&&fitout.materials[id] ? buildMaterial(id,fitout.materials[id]) : plain;
+export function buildBuiltins(fitout,realistic=false) {
+  const group=new THREE.Group();group.name=realistic?'Built-ins (realistic)':'Built-ins';
+  const material=id=>id&&fitout.materials[id] ? buildMaterial(id,fitout.materials[id],realistic) : plain;
   for(const b of fitout.builtins || [])if(b.type==='counter')group.add(counter(b,material));
   return group;
 }

@@ -6,6 +6,7 @@
 //    "walls": [{"room": "*", "material": "paint-warm-white"},
 //              {"room": "master-bath", "to": 2.4, "material": "marble-striped"}],
 //    "doors": "walnut", "doorFrames": "black-matt", "windowFrames": "aluminium-white",
+//    "skirting": {"height": 0.1, "depth": 0.012, "material": "marble-beige", "except": ["master-bath"]},
 //    "builtins": [{"type": "counter", "room": "kitchen", "path": [[x,z], [x,z], ...],
 //                  "depth": 0.6, "height": 0.9, "top": "granite-black", "base": "oak-laminate",
 //                  "plinth": "black-matt", "sink": {"at": 1.4, "width": 0.8},
@@ -28,6 +29,9 @@ export function parseMaterials(json) {
     const need=MATERIAL_KINDS[def?.kind];
     if(!need)errors.push(`library/materials.json ${id}: unknown kind "${def?.kind}"; use ${Object.keys(MATERIAL_KINDS).join(', ')}`);
     else for(const field of need)if(def[field]===undefined)errors.push(`library/materials.json ${id}: ${def.kind} needs ${field}`);
+    // `photo`: an image texture set for the Realistic tab (library/tools/textures.mjs fetches it).
+    if(def?.photo&&!(/^polyhaven:[a-z0-9_]+$/.test(def.photo.source)&&Array.isArray(def.photo.size)&&def.photo.size.every(v=>v>0)))
+      errors.push(`library/materials.json ${id}: photo needs source "polyhaven:<id>" and size [w,h] in metres`);
   }
   if(errors.length)throw new Error(errors.join('\n'));
   return data.materials;
@@ -59,10 +63,18 @@ export function applyFitout(home,json,materials) {
     if(b.sink&&!(b.sink.at>=0&&b.sink.width>0))errors.push(`fitout.json ${where}.sink: needs at and width`);
   });
   for(const key of ['doors','doorFrames','windowFrames'])if(data[key])material(data[key],key);
+  // Skirting runs along every room-facing wall face except the listed rooms, broken at doors.
+  if(data.skirting) {
+    const k=data.skirting;material(k.material,'skirting');
+    if(!(k.height>0&&k.height<.5))errors.push('fitout.json skirting: height must be metres (under 0.5)');
+    if(k.depth!==undefined&&!(k.depth>0&&k.depth<.1))errors.push('fitout.json skirting: depth must be metres (under 0.1)');
+    for(const id of k.except || [])room(id,'skirting.except');
+  }
   if(errors.length)throw new Error(errors.join('\n'));
   return {...home,fitout:{floors:data.floors || {},walls:(data.walls || []).map(r=>({from:0,...r})),
     doors:data.doors || null,doorFrames:data.doorFrames || null,windowFrames:data.windowFrames || null,
     builtins:data.builtins || [],
+    skirting:data.skirting?{depth:.012,except:[],...data.skirting}:null,
     materials:Object.fromEntries([...used].map(id=>[id,materials[id]]))}};
 }
 

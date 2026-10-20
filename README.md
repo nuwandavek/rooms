@@ -78,15 +78,19 @@ top right. View settings includes zoom −/+, wall cutaway, layers and lighting.
 The project name, location, bedrooms and floor area live in the collapsible
 **Project details** card at the top right.
 
-Choose **Walk** for a standing view at 1.65 m eye height. Use **WASD** to move
-and drag on the scene to look. **Mouse look** in settings captures the mouse;
-**Esc** releases it. Click the scene to resume keyboard control after using UI
+Choose **Walk** for a standing view at 1.65 m eye height. **Click the floor** to
+glide there (a ring shows where you will land), **drag** to look around (Street View
+style), and use **WASD** or the **arrow keys** to move, **Q/E** or **←/→** to turn and
+the **scroll wheel** to step. **Mouse look** in settings captures the mouse and turns
+like a game; **Esc** releases it. Click the scene to resume keyboard control after using UI
 controls. Walls, windows, railings, voids and slab edges block movement; doorways
 and open sliding doors are passable. Room buttons jump to that room. Walk uses
 full-height walls; switching back to 3D restores the cutaway setting.
 
 To open a stage directly, visit `http://127.0.0.1:4173/?tab=shell` (or `fitout`,
-`furnished`; `?tab=home3d` opens the last 3D stage).
+`furnished`, `realistic`; `?tab=home3d` opens the last 3D stage). Add `&mode=walk` to
+start in Walk mode (`&mode=3d` is the default); the URL keeps both as you switch. In
+Walk mode it also keeps `&cam=x,z,heading,pitch`, so copying the address shares the exact view.
 
 ## Assets tab and model library
 
@@ -164,11 +168,13 @@ Choose in a project's `home.js`:
 
 ```js
 theme: 'riso',          // or 'almanac', 'drafting'
-lighting: 'daylight',   // or 'afternoon'
+lighting: 'day',        // or 'night'
 ```
 
-The viewer's Light study control switches between soft daylight and late
-afternoon. Lighting is illustrative, not a sun-path or illuminance calculation.
+The viewer's Light study buttons switch between **Day** (soft daylight) and
+**Night** (faint moonlight, lamps on). Walk mode looks out at a generated city (plain towers
+under a gradient sky, lit windows at night) with the street `storey` floors below
+(`storey: 5` in `home.js`, default 3). Lighting is illustrative, not a sun-path or illuminance calculation.
 The 3D palette and light setup live in `kit/themes.js`; exact source palette
 snapshots and principles live in `kit/themes/`. Riso loads Fraunces and Space Mono from Google Fonts (fonts.gstatic.com), using
 Artifactbin’s pinned font definitions. System fonts are the offline fallback;

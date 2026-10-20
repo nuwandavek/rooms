@@ -102,11 +102,30 @@ function draw(id,def) {
   return null;
 }
 
+// `realistic` (the Realistic tab) builds a physical variant: the pattern doubles as a bump
+// map so grout, veins and grain catch light, and polished surfaces (roughness ≤ 0.3)
+// get a soft satin clearcoat: a broad sheen, not pinpoint lamp reflections.
 const cache=new Map();
-export function buildMaterial(id,def) {
-  if(cache.has(id))return cache.get(id);
-  const material=new THREE.MeshStandardMaterial({color:def.kind==='paint'?def.colour:'#ffffff',
-    roughness:def.roughness ?? .7,metalness:def.metalness ?? 0});
+export function buildMaterial(id,def,realistic=false) {
+  const key=realistic?`${id}|realistic`:id;
+  if(cache.has(key))return cache.get(key);
+  const options={color:def.kind==='paint'?def.colour:'#ffffff',roughness:def.roughness ?? .7,metalness:def.metalness ?? 0};
+  const polished=(def.roughness ?? .7)<=.3;
+  const material=realistic
+    ? new THREE.MeshPhysicalMaterial({...options,...(polished?{clearcoat:.3,clearcoatRoughness:.4,roughness:Math.max(options.roughness,.55)}:{})})
+    : new THREE.MeshStandardMaterial(options);
+  // A downloaded texture set (Realistic tab only) replaces the procedural pattern.
+  if(realistic&&def.photo?.urls) {
+    const loader=new THREE.TextureLoader(),[w,h]=def.photo.size;
+    const load=(url,colour)=>{const t=loader.load(url);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(1/w,1/h);
+      t.anisotropy=8;if(colour)t.colorSpace=THREE.SRGBColorSpace;return t;};
+    material.color.set(def.photo.tint || '#ffffff');
+    material.map=load(def.photo.urls.map,true);
+    material.normalMap=load(def.photo.urls.normal);material.normalScale.set(.8,.8);
+    material.roughnessMap=load(def.photo.urls.roughness);material.roughness=polished?.75:1;
+    material.name=id;cache.set(key,material);
+    return material;
+  }
   const drawn=def.kind==='paint'?null:draw(id,def);
   if(drawn) {
     const map=new THREE.CanvasTexture(drawn.canvas);
@@ -114,7 +133,10 @@ export function buildMaterial(id,def) {
     map.repeat.set(1/drawn.size[0],1/drawn.size[1]);
     if(def.pattern==='diagonal')map.rotation=Math.PI/4;  // Diamond layout.
     material.map=map;
+    if(realistic&&def.kind!=='stripes') {
+      material.bumpMap=map;material.bumpScale=def.kind==='tiles'?2.5:def.kind==='wood'?1.2:.8;
+    }
   }
-  material.name=id;cache.set(id,material);
+  material.name=id;cache.set(key,material);
   return material;
 }

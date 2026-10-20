@@ -29,13 +29,14 @@ export async function serveProject(name,port=4173) {
         res.end(req.method==='HEAD'?undefined:await readFile(file));return;
       }
       if(url.pathname==='/favicon.ico'){res.writeHead(204).end();return;}
-      // Shared library models, for the Assets tab and later placement.
+      // Shared library models and Realistic-tab textures.
       if(url.pathname.startsWith('/library/')) {
         const library=await realpath(resolve(root,'library'));
         const file=await realpath(resolve(library,'.'+decodeURIComponent(url.pathname.slice('/library'.length))));
         const rel=relative(library,file);
-        if(rel.startsWith('..')||extname(file)!=='.glb'){res.writeHead(403).end();return;}
-        res.writeHead(200,{'Content-Type':'model/gltf-binary'});res.end(req.method==='HEAD'?undefined:await readFile(file));return;
+        const type={'.glb':'model/gltf-binary','.jpg':'image/jpeg','.hdr':'image/vnd.radiance'}[extname(file)];
+        if(rel.startsWith('..')||!type){res.writeHead(403).end();return;}
+        res.writeHead(200,{'Content-Type':type});res.end(req.method==='HEAD'?undefined:await readFile(file));return;
       }
       // Viewer images and references are served from the project; never expose archive or other projects.
       const project=await realpath(projectPath(name));

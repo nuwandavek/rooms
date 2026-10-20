@@ -36,6 +36,7 @@ export function markup(home) {
       <button id="tab-shell" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Walls, rooms and openings"><span class="tab-step">3.</span>Shell</button>
       <button id="tab-fitout" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
       <button id="tab-furnished" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
+      <button id="tab-realistic" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="The furnished home with realistic lighting and materials"><span class="tab-step">6.</span>Realistic</button>
     </div>
     <details class="project-details"><summary>Project details <span>＋</span></summary><div class="project-details-body">
       <div class="project-card-title"><span class="brand-mark">${escape(home.mark || 'h.')}</span><h2>${escape(home.brand || home.title)}</h2></div>
@@ -67,19 +68,18 @@ export function markup(home) {
       <button id="browse-resources" class="all-rooms">Browse all resources ↗</button>
     </aside>
     <section class="viewport" aria-label="Interactive home model">
-      <div id="scene"></div><div id="labels"></div>
+      <div id="scene"></div><div id="labels"></div><div id="lock-hint" class="lock-hint" role="status" hidden>Mouse look · Press <kbd>Esc</kbd> to exit</div>
       <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">3D</button><button id="walk-button" aria-pressed="false">Walk</button></div></div>
       <div class="segmented camera-presets" id="camera-presets" role="group" aria-label="Camera"><button id="reset-camera" title="Whole home, default camera">↺ Reset</button><button id="top-view">Top-down</button></div>
       <details class="settings" open><summary>View settings <span>＋</span></summary>
-        <button id="mouse-look" class="quiet-button" hidden>Mouse look ↗</button>
+        <button id="mouse-look" class="quiet-button" aria-pressed="false" hidden>Mouse look ↗</button>
         <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-output" aria-label="Zoom level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button></div>
         <label class="switch-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
-        <label class="switch-row">Doors & glazing<input id="openings-toggle" type="checkbox" checked></label>
         <label class="switch-row">Doors closed<input id="doors-closed" type="checkbox"></label>
         <div class="wall-label"><label for="wall-height">Wall cutaway</label><output id="height-output"></output></div>
         <input id="wall-height" aria-label="Visible wall height" type="range" min="0.15" max="${home.model.wallHeight}" step="0.05" value="${home.model.cutaway}">
         <div class="range-labels"><span>LOW</span><button id="full-height">Full height ↗</button></div>
-        <label class="lighting-label" for="lighting">Light study</label><select id="lighting"><option value="daylight">Soft daylight</option><option value="afternoon">Late afternoon</option></select>
+        <div class="lighting-label" id="lighting-label">Light study</div><div class="segmented light-study" role="group" aria-labelledby="lighting-label"><button id="light-day" aria-pressed="true">☀ Day</button><button id="light-night" aria-pressed="false">☾ Night</button></div>
         <button id="reset-settings" class="quiet-button">↺ Reset settings</button>
         <small class="lighting-note">Illustrative lighting</small>
       </details>
@@ -95,7 +95,7 @@ export function markup(home) {
 // Resources and dialogs work even when WebGL is unavailable.
 // Tabs follow the authoring stages. Shell, Fit-out and Furnished share the 3D panel and
 // add layers left to right; `onStage` tells the viewer which one is showing.
-export const STAGES=['shell','fitout','furnished'];
+export const STAGES=['shell','fitout','furnished','realistic'];
 export function setupUI(home,target,onRoom,onStage=()=>{}) {
   const get=id=>target.querySelector(`#${id}`);
   let tab='resources',stage='furnished';

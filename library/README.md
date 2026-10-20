@@ -52,8 +52,18 @@ new recipe. The contact sheet shows every model from its front-right with its si
 model seen from the back is turned wrong. Once converted, the download can be deleted:
 the catalog records the pack and original file for each model.
 
-Imported so far (all CC0): Kenney Furniture Kit 2.0 (140, ×2 scale), Quaternius
-Furniture Pack Oct 2017 (23, ×1.3, fronts turned from +x), Quaternius Furniture Pack
-Mar 2019 (20, ×0.7).
+Imported so far:
 
-Plans for the library (matching, textures, scale) are in [ROADMAP.md](../ROADMAP.md).
+- CC0: Kenney Furniture Kit 2.0 (140, x2 scale), Quaternius Furniture Pack Oct 2017
+  (23, x1.3, fronts turned from +x), Quaternius Furniture Pack Mar 2019 (20, x0.7),
+  Poly Haven (14 photoreal models, 1k textures, decimated to 40k triangles).
+- **Sketchfab Standard** (usable in projects, not redistributable as files): "Vase Pack"
+  by powers28, split into 10 shapes x ceramic/glass (`vase-ceramic-01`...`vase-glass-10`).
+- **Licence unknown**: `GLASS.obj`, split into five glass bud vases and bottles
+  (`bud-vase-01`...`05`); its `.max` source has V-Ray materials we cannot read, so the
+  importer gives them a plain clear glass.
+
+Packs with many items in one file use `split` in their recipe: each mesh becomes its
+own model.
+
+Plans for realistic models and textures, and for matching at scale, are in [REALISM.md](../REALISM.md).

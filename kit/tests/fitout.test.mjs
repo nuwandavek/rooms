@@ -24,3 +24,9 @@ test('fitout.json rejects unknown rooms, materials and bad bands',()=>{
 test('materials.json checks kinds and required fields',()=>{
   assert.throws(()=>parseMaterials(JSON.stringify({materials:{a:{kind:'velvet'},b:{kind:'tiles',colour:'#fff'}}})),e=>/unknown kind "velvet"/.test(e.message)&&/tiles needs size/.test(e.message));
 });
+test('skirting validates its material, height and excepted rooms',()=>{
+  const home=applyFitout(starter,JSON.stringify({skirting:{height:.1,material:'tile'}}),materials);
+  assert.deepEqual(home.fitout.skirting,{depth:.012,except:[],height:.1,material:'tile'});
+  assert.throws(()=>applyFitout(starter,JSON.stringify({skirting:{height:2,material:'gold',except:['den']}}),materials),
+    e=>/no material "gold"/.test(e.message)&&/height must be metres/.test(e.message)&&/no room "den"/.test(e.message));
+});

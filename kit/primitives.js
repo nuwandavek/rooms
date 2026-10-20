@@ -16,14 +16,23 @@ function framed(group,[w,h,d],border,face) {
   const b=Math.min(.035,w/6,h/6);
   slab(group,[w,b,d],[0,0,0],border);slab(group,[w,b,d],[0,h-b,0],border);
   slab(group,[b,h-2*b,d],[-(w-b)/2,b,0],border);slab(group,[b,h-2*b,d],[(w-b)/2,b,0],border);
-  slab(group,[w-2*b,h-2*b,d*.4],[0,b,-d*.2],face);
+  const pane=slab(group,[w-2*b,h-2*b,d*.4],[0,b,-d*.2],face);
+  // The front of the pane, for a real reflection on the Realistic tab (kit/realistic.js).
+  pane.userData.mirrorFace={geometry:()=>new THREE.PlaneGeometry(w-2*b,h-2*b),position:[0,h/2,.001]};
+  return pane;
+}
+const textures=new Map();
+function artMaterial(url) {
+  if(!textures.has(url)){const t=new THREE.TextureLoader().load(url);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;textures.set(url,t);}
+  return material('#ffffff',{map:textures.get(url),roughness:.85});
 }
 
-export function buildPrimitive(name,[w,h,d],colour) {
+// `art` is an image (a print cropped from the listing photos) shown inside a @frame.
+export function buildPrimitive(name,[w,h,d],colour,art=null) {
   const group=new THREE.Group();
   const glass=material('#cfdade',{roughness:.08,metalness:.85});
   if(name==='box')slab(group,[w,h,d],[0,0,0],material(colour || '#e6e1d8'));
-  else if(name==='frame')framed(group,[w,h,d],material(colour || '#1f1f1f'),material('#ece4d8'));
+  else if(name==='frame')framed(group,[w,h,d],material(colour || '#1f1f1f'),art?artMaterial(art):material('#ece4d8')).userData.mirrorFace=null;
   else if(name==='mirror')framed(group,[w,h,d],material(colour || '#1f1f1f'),glass);
   else if(name==='mirror-arch') {
     // Rectangle with a semicircular top, extruded to depth d; glass set slightly back.
@@ -33,6 +42,7 @@ export function buildPrimitive(name,[w,h,d],colour) {
     const extrude=(s,depth)=>new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false}).translate(0,0,-depth/2);
     group.add(new THREE.Mesh(extrude(outer,d),material(colour || '#1f1f1f')));
     const pane=new THREE.Mesh(extrude(shape(Math.min(.03,w/8)),d*.4),glass);pane.position.z=-d*.2;group.add(pane);
+    pane.userData.mirrorFace={geometry:()=>new THREE.ShapeGeometry(shape(Math.min(.03,w/8)),24),position:[0,0,.001]};
   }
   else if(name==='glass')slab(group,[w,h,d],[0,0,0],material(colour || '#dfeef0',{roughness:.05,transparent:true,opacity:.28,depthWrite:false}));
   else if(name==='rug')slab(group,[w,h,d],[0,0,0],material(colour || '#9a9a96',{roughness:1}));
@@ -59,10 +69,38 @@ export function fitModel(object,dims,colour) {
     // Mix in display (sRGB) space; a linear mix leaves dark targets looking brown.
     const target=new THREE.Color(colour).convertLinearToSRGB();
     object.traverse(o=>{if(o.isMesh)o.material=[o.material].flat().map(m=>{
+      if(m.map?.image&&!m.transparent)return recolour(m,new THREE.Color(colour));
       const tinted=m.clone();
       if(tinted.color)tinted.color.convertLinearToSRGB().lerp(target,.85).convertSRGBToLinear();
       return tinted;
     });if(o.isMesh&&o.material.length===1)o.material=o.material[0];});
   }
   return object;
+}
+
+// Textured models (photoreal furniture) can only be darkened by a colour multiply, so
+// instead the texture's brightness is kept and its colour replaced: dark leather becomes
+// cream leather with the same folds. Brightness is normalised by the texture's average.
+const averages=new WeakMap();
+function averageLuminance(image) {
+  if(averages.has(image))return averages.get(image);
+  let value=.5;
+  try {
+    const c=document.createElement('canvas');c.width=c.height=16;const g=c.getContext('2d');
+    g.drawImage(image,0,0,16,16);const d=g.getImageData(0,0,16,16).data;let sum=0;
+    for(let i=0;i<d.length;i+=4)sum+=((.2126*d[i]+.7152*d[i+1]+.0722*d[i+2])/255)**2.2;
+    value=Math.max(.02,sum/(d.length/4));
+  } catch { /* Unreadable image: keep the default. */ }
+  averages.set(image,value);return value;
+}
+function recolour(source,colour) {
+  const material=source.clone();material.color.set('#ffffff');
+  const average=averageLuminance(source.map.image);
+  material.onBeforeCompile=shader=>{
+    shader.uniforms.recolour={value:colour};shader.uniforms.averageLuminance={value:average};
+    shader.fragmentShader='uniform vec3 recolour;\nuniform float averageLuminance;\n'+shader.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\nfloat recolourL=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722));\ndiffuseColor.rgb=recolour*clamp(recolourL/averageLuminance,0.,1.8);');
+  };
+  material.customProgramCacheKey=()=>'recolour';
+  return material;
 }

@@ -256,7 +256,9 @@ h1 {
   border-radius: 2px;
   font-size: 11px;
 }
-.segmented button.active {
+.light-study { display: flex; width: 100%; margin: 6px 0 10px; }
+.light-study button { flex: 1; }
+.segmented button.active, .light-study button[aria-pressed=true] {
   background: var(--ink);
   color: var(--sheet);
 }
@@ -1045,3 +1047,7 @@ button:disabled {
 .asset-notes{color:var(--muted);font-size:12px;max-width:260px}
 .asset-placed{font:11px var(--font-mono,monospace);color:var(--muted)}
 .asset-placed.done{color:var(--ink);font-weight:700}
+
+.lock-hint{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 14px;background:var(--ink);color:var(--sheet);font-size:11px;pointer-events:none}
+.lock-hint kbd{padding:1px 5px;border:1px solid currentColor;font:inherit}
+#mouse-look[aria-pressed=true]{background:var(--accent);color:var(--onAccent)}

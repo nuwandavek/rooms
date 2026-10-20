@@ -9,7 +9,7 @@ Required: `title`. Optional: `brand`, `mark`, `subtitle`, `location`,
 `stats: [{value,unit,label}]`,
 `source: {label,url,note}`, `floorPlan: {image,alt,note}`,
 `resources: [{name,photos: [imagePath,...]}]` for additional photo groups,
-`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'daylight' | 'afternoon'`.
+`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'day' | 'night'` (the starting light study).
 Text is plain text; use `\n` for a headline line break.
 
 Images are project-relative JPG, PNG or WebP paths, for example
