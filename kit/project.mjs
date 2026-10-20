@@ -2,6 +2,9 @@ import {access,cp,mkdir,readFile,readdir,realpath,writeFile} from 'node:fs/promi
 import {dirname,extname,isAbsolute,relative,resolve,sep} from 'node:path';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {validateHome,imagePaths} from './validate.js';
+import {applyResources} from './resources.js';
+import {applyInventory} from './inventory.js';
+import {applyPlacements} from './placements.js';
 
 export const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function projectPath(name) {
@@ -25,7 +28,16 @@ export async function newProject(name) {
 }
 export async function loadProject(name) {
   const dir=projectPath(name);
-  const home=(await import(pathToFileURL(resolve(dir,'home.js')).href+`?t=${Date.now()}`)).default;
+  let home=(await import(pathToFileURL(resolve(dir,'home.js')).href+`?t=${Date.now()}`)).default;
+  // resources.md, when present, supplies the floor plan, room photos and extra groups.
+  const markdown=await readFile(resolve(dir,'resources.md'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(markdown!==null)home=applyResources(home,markdown);
+  // inventory.md, when present, lists the furniture and fittings for the Assets tab.
+  const inventory=await readFile(resolve(dir,'inventory.md'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(inventory!==null)home=applyInventory(home,inventory);
+  // placements.json, when present, positions library models in the 3D home.
+  const placements=await readFile(resolve(dir,'placements.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(placements!==null)home=applyPlacements(home,placements);
   const errors=validateHome(home);
   if(errors.length)throw new Error(errors.join('\n'));
   const realDir=await realpath(dir),images={};
@@ -34,26 +46,33 @@ export async function loadProject(name) {
     const full=await realpath(resolve(dir,path));
     const rel=relative(realDir,full);
     if(rel==='..'||rel.startsWith('..'+sep)||isAbsolute(rel))throw new Error(`Image is outside the project: ${path}`);
-    const mime={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp'}[extname(full).toLowerCase()];
-    if(!mime)throw new Error(`Unsupported image type: ${path}. Use JPG, PNG, or WebP.`);
-    images[path]=`data:${mime};base64,${(await readFile(full)).toString('base64')}`;
+    if(!['.jpg','.jpeg','.png','.webp'].includes(extname(full).toLowerCase()))throw new Error(`Unsupported image type: ${path}. Use JPG, PNG, or WebP.`);
+    // out/index.html sits one level below the project; this resolves over file:// and the server.
+    images[path]='../'+path.split('/').map(encodeURIComponent).join('/');
+  }
+  // Models come from the shared library/; out/index.html is three levels below the repo root.
+  const models={};
+  for(const id of new Set([...(home.inventory || []),...(home.placements || [])].map(a=>a.model).filter(Boolean))) {
+    await access(resolve(root,'library',`${id}.glb`)).catch(()=>{throw new Error(`No library model library/${id}.glb (referenced in inventory.md or placements.json)`);});
+    models[id]=`../../../library/${id}.glb`;
   }
   await access(resolve(dir,'index.html'));
-  return {dir,home,images};
+  return {dir,home,images,models};
 }
 export async function buildProject(name) {
   const {build}=await import('esbuild');
-  const {dir,home,images}=await loadProject(name);
-  // Resolve image paths at build time. The export needs neither fetch nor a server.
-  // Embed each image once, even when it appears in Resources and the viewer.
+  const {dir,home,images,models}=await loadProject(name);
+  // Images stay as files; rewrite project-relative paths to be relative to out/.
   const entry=`import {mount} from './kit/home.js';
-    const home=${JSON.stringify(home)}, images=${JSON.stringify(images)};
+    const home=${JSON.stringify(home)}, images=${JSON.stringify(images)}, models=${JSON.stringify(models)};
     if(home.floorPlan)home.floorPlan.image=images[home.floorPlan.image];
     for(const room of home.model.rooms){
       if(room.photo)room.photo=images[room.photo];
       if(room.photos)room.photos=room.photos.map(path=>images[path]);
     }
     for(const group of home.resources || [])group.photos=group.photos.map(path=>images[path]);
+    for(const asset of home.inventory || []){asset.photos=asset.photos.map(path=>images[path]);asset.modelUrl=models[asset.model] || null;}
+    for(const placement of home.placements || [])placement.modelUrl=models[placement.model];
     window.home3d=mount(home);`;
   const result=await build({stdin:{contents:entry,
     resolveDir:root,sourcefile:'home-entry.js',loader:'js'},bundle:true,format:'iife',minify:true,write:false,legalComments:'inline'});

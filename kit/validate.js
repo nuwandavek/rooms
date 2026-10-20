@@ -56,5 +56,5 @@ export function validateHome(home) {
 
 export function imagePaths(home) {
   return [...new Set([home.floorPlan?.image,...home.model.rooms.flatMap(r=>[r.photo,...(r.photos || [])]),
-    ...(home.resources || []).flatMap(group=>group.photos)].filter(Boolean))];
+    ...(home.resources || []).flatMap(group=>group.photos),...(home.inventory || []).flatMap(asset=>asset.photos)].filter(Boolean))];
 }

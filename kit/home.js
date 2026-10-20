@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createShell } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk} from './walk.js';
@@ -61,7 +62,7 @@ export function mount(home, target=document.body) {
     grid=new THREE.GridHelper(Math.ceil(span*3),Math.ceil(span*3),theme.ui.line,theme.ui.line);
     grid.position.set(mid.x,-.225,mid.y);grid.material.transparent=true;grid.material.opacity=.35;scene.add(grid);
   }
-  let mode='orbit', selected=null, transition=null, frame;
+  let mode='orbit', view='iso', selected=null, transition=null, frame;
   const labels=new Map(), buttons=new Map();
   const defaultPhoto=model.rooms.find(r=>roomPhotos(r).length) || model.rooms[0];
   function photo(room) {
@@ -87,7 +88,7 @@ export function mount(home, target=document.body) {
   }
   function move(targetPoint,zoom=1) {
     transition={start:performance.now(),fromTarget:controls.target.clone(),toTarget:targetPoint,
-      fromPosition:camera.position.clone(),toPosition:targetPoint.clone().add(mode==='plan'?planOffset:orbitOffset),
+      fromPosition:camera.position.clone(),toPosition:targetPoint.clone().add(view==='top'?planOffset:orbitOffset),
       fromZoom:camera.zoom,toZoom:zoom};
   }
   function select(id) {
@@ -119,21 +120,21 @@ export function mount(home, target=document.body) {
     }
   }
   function updateHeight() {
-    const height=mode==='walk'?model.wallHeight:mode==='plan'?.15:Number(get('wall-height').value);
+    const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     shell.setWallHeight(height,mode==='walk');get('height-output').value=`${height.toFixed(2)} m`;
-    get('wall-height').disabled=mode!=='orbit';
+    get('wall-height').disabled=mode==='walk';
   }
   function setMode(value) {
-    if(!['orbit','plan','walk'].includes(value))return;
-    mode=value;transition=null;controls.enabled=mode!=='walk';controls.enableRotate=mode==='orbit';
+    if(!['orbit','walk'].includes(value))return;
+    mode=value;transition=null;controls.enabled=mode!=='walk';
     walk.setActive(mode==='walk');
     get('labels').hidden=mode==='walk'||!get('labels-toggle').checked;
     get('labels-toggle').disabled=mode==='walk';
-    target.querySelector('.zoom-controls').hidden=mode==='walk';get('mouse-look').hidden=mode!=='walk';
+    target.querySelector('.zoom-controls').hidden=mode==='walk';get('mouse-look').hidden=mode!=='walk';get('top-view').hidden=mode==='walk';
     get('full-height').disabled=mode==='walk';
     get('navigation-help').textContent=mode==='walk'?'WASD to move · Drag to look · Mouse look + Esc to release':'Drag to orbit · Scroll to zoom · Right-drag to pan';
     target.querySelector('.viewport').classList.toggle('walking',mode==='walk');
-    for(const key of ['orbit','plan','walk']) {get(`${key}-button`).classList.toggle('active',mode===key);get(`${key}-button`).setAttribute('aria-pressed',String(mode===key));}
+    for(const key of ['orbit','walk']) {get(`${key}-button`).classList.toggle('active',mode===key);get(`${key}-button`).setAttribute('aria-pressed',String(mode===key));}
     updateHeight();select(selected);
   }
   function setLighting(value) {
@@ -143,9 +144,11 @@ export function mount(home, target=document.body) {
     ambient.intensity=late?1.8:light.ambient;
     get('lighting').value=value;
   }
-  get('orbit-button').onclick=()=>setMode('orbit');get('plan-button').onclick=()=>setMode('plan');
+  get('orbit-button').onclick=()=>setMode('orbit');
+  // Camera presets move the camera once; room focus reuses the last one. Reset also clears the room.
+  get('top-view').onclick=()=>{view='top';select(selected);};
   get('walk-button').onclick=()=>setMode('walk');get('mouse-look').onclick=()=>walk.lock();
-  get('reset-camera').onclick=()=>select(null);get('reset-room').onclick=()=>select(null);
+  get('reset-camera').onclick=()=>{view='iso';select(null);};get('reset-room').onclick=()=>select(null);
   function zoomBy(factor) {
     // Finish a room-focus move first, so zooming preserves its intended target.
     if(transition) {
@@ -158,6 +161,18 @@ export function mount(home, target=document.body) {
   get('zoom-in').onclick=()=>zoomBy(1.25);get('zoom-out').onclick=()=>zoomBy(1/1.25);
   get('labels-toggle').onchange=e=>get('labels').hidden=!e.target.checked;
   get('openings-toggle').onchange=e=>shell.openings.visible=e.target.checked;
+  // Placed library models. Each file loads once and is cloned per placement.
+  const furniture=new THREE.Group();furniture.name='Furniture';scene.add(furniture);
+  const loader=new GLTFLoader(),sources=new Map();
+  const furnitureReady=Promise.allSettled((home.placements || []).map(async placement=>{
+    if(!sources.has(placement.modelUrl))sources.set(placement.modelUrl,loader.loadAsync(placement.modelUrl));
+    const object=(await sources.get(placement.modelUrl)).scene.clone(true);
+    object.position.set(placement.at[0],0,placement.at[1]);
+    object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
+    object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
+    object.userData.placement=placement;furniture.add(object);
+  })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
+  get('furniture-toggle').onchange=e=>furniture.visible=e.target.checked;
   get('wall-height').oninput=updateHeight;
   get('full-height').onclick=()=>{get('wall-height').value=model.wallHeight;setMode('orbit');};
   get('lighting').onchange=e=>setLighting(e.target.value);
@@ -196,11 +211,13 @@ export function mount(home, target=document.body) {
     }
     controls.update();
     const {width,height}=host.getBoundingClientRect();
+    // Minor-room labels only read cleanly from roughly overhead.
+    const overhead=camera.position.y-controls.target.y>.95*camera.position.distanceTo(controls.target);
     for(const room of model.rooms) {
       projected.set(room.center[0],.08,room.center[1]).project(camera);
       const label=labels.get(room.id);
       label.style.left=`${(projected.x*.5+.5)*width}px`;label.style.top=`${(-projected.y*.5+.5)*height}px`;
-      label.style.visibility=Math.abs(projected.z)>1 || (!room.featured && mode==='orbit')?'hidden':'visible';
+      label.style.visibility=Math.abs(projected.z)>1 || (!room.featured && mode==='orbit' && !overhead)?'hidden':'visible';
     }
     get('zoom-output').value=`${Math.round(camera.zoom*100)}%`;
     get('zoom-in').disabled=camera.zoom>=controls.maxZoom-.001;
@@ -209,7 +226,7 @@ export function mount(home, target=document.body) {
   }
   updateHeight();setLighting(home.lighting || 'daylight');select(null);frame=requestAnimationFrame(render);
   document.body.dataset.modelReady='true';
-  return {select,setMode,setLighting,setTab:ui.setTab,scene,get camera(){return mode==='walk'?walk.camera:camera;},
+  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
     dispose(){cancelAnimationFrame(frame);observer.disconnect();walk.dispose();controls.dispose();shell.dispose();ground.geometry.dispose();ground.material.dispose();grid?.geometry.dispose();grid?.material.dispose();renderer.dispose();target.replaceChildren();delete document.body.dataset.modelReady;},
   };
 }

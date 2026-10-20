@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import {access,writeFile} from 'node:fs/promises';
 import {dirname,resolve} from 'node:path';
-import {pathToFileURL} from 'node:url';
 import {chromium} from 'playwright';
 import {buildProject,loadProject} from './project.mjs';
 import {roomPhotos} from './ui.js';
@@ -16,25 +15,31 @@ export async function checkProject(name) {
     try{await access(chrome);options.executablePath=chrome;}catch{}
   }
   const browser=await chromium.launch(options);
+  // Serve the project: library models load with fetch, which file:// pages cannot use.
+  const {serveProject}=await import('./server.mjs');
+  const server=await serveProject(name,0),local=`http://127.0.0.1:${server.address().port}/`;
   const errors=[];
   try {
     const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'});
     page.on('pageerror',e=>errors.push(e.message));
     page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-    // Only the theme fonts may load remotely; model and photo assets are embedded.
+    // Only the theme fonts may load remotely; everything else comes from the local server.
     await page.route(/^https?:/,route=>{
       const request=route.request();
-      if(new URL(request.url()).hostname==='fonts.gstatic.com' && request.resourceType()==='font')return route.continue();
+      const host=new URL(request.url()).hostname;
+      if(host==='127.0.0.1' || (host==='fonts.gstatic.com' && request.resourceType()==='font'))return route.continue();
       errors.push(`Unexpected network request: ${request.url()}`);return route.abort();
     });
-    await page.goto(pathToFileURL(file).href);
+    await page.goto(local);
     await page.waitForFunction(()=>document.body.dataset.modelReady==='true',{},{timeout:20000});
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     await page.evaluate(()=>document.fonts.ready);
+    await page.evaluate(()=>window.home3d.furnitureReady);
+    assert.equal(await page.evaluate(()=>window.home3d.furniture.children.length),(home.placements || []).length,'Every placement loads its model');
     assert.equal(await page.title(),home.title);
     assert.equal(await page.locator('#room-list button').count(),home.model.rooms.filter(r=>r.featured).length);
     assert.equal(await page.locator('#panel-resources').isVisible(),true);
-    // Decode even off-screen gallery images to check the full offline asset set.
+    // Decode even off-screen gallery images to check the full local asset set.
     await page.locator('img[src]').evaluateAll(imgs=>Promise.all(imgs.map(img=>{img.loading='eager';return img.decode();})));
     await page.screenshot({path:resolve(out,'check-resources.png')});
     if(home.floorPlan) {
@@ -73,11 +78,10 @@ export async function checkProject(name) {
       assert.equal(await page.locator('#room-photo').isVisible(),false);
     }
     await page.locator('#reset-room').click();
-    await page.locator('#plan-button').click();
-    assert.equal(await page.locator('#wall-height').isDisabled(),true);
-    await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-    await page.screenshot({path:resolve(out,'check-plan.png')});
-    await page.locator('#orbit-button').click();
+    await page.locator('#top-view').click();
+    await page.waitForTimeout(1200);
+    await page.screenshot({path:resolve(out,'check-top-down.png')});
+    await page.locator('#reset-camera').click();
     await page.locator('#labels-toggle').uncheck();
     assert.equal(await page.locator('#labels').isVisible(),false);
     await page.locator('#labels-toggle').check();
@@ -109,6 +113,13 @@ export async function checkProject(name) {
     assert.equal(await page.locator('#panel-resources').isVisible(),true);
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('#panel-home3d').isVisible(),true);
+    await page.locator('#tab-assets').click();
+    assert.equal(await page.locator('#panel-assets').isVisible(),true);
+    assert.equal(await page.locator('.asset-table tbody tr').count(),(home.inventory || []).length);
+    await page.waitForFunction(()=>!document.querySelector('[data-model] span'),{},{timeout:15000});
+    assert.equal(await page.locator('[data-model] img').count(),(home.inventory || []).filter(a=>a.model).length,'Every library model renders a preview');
+    await page.screenshot({path:resolve(out,'check-assets.png')});
+    await page.locator('#tab-home3d').click();
     await page.setViewportSize({width:390,height:844});
     await page.reload();
     await page.waitForFunction(()=>document.body.dataset.modelReady==='true');
@@ -121,7 +132,7 @@ export async function checkProject(name) {
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Mobile resource gallery must not overflow');
     await page.screenshot({path:resolve(out,'check-resources-mobile.png'),fullPage:false});
     assert.deepEqual(errors,[],'No browser errors or external requests');
-    await writeFile(resolve(out,'check.json'),JSON.stringify({project:name,checkedAt:new Date().toISOString(),rooms:home.model.rooms.length,theme:home.theme || 'riso',errors,screenshots:['check-resources.png','check-3d.png','check-plan.png','check-light.png','check-walk.png','check-mobile.png','check-resources-mobile.png']},null,2)+'\n');
-    console.log(`Checked ${name}: tabs, galleries, zoom, room selection, references, plan/3D, cutaway, layers, lighting, mobile, and embedded assets.\nScreenshots: ${out}/check-*.png`);
-  } finally {await browser.close();}
+    await writeFile(resolve(out,'check.json'),JSON.stringify({project:name,checkedAt:new Date().toISOString(),rooms:home.model.rooms.length,theme:home.theme || 'riso',errors,screenshots:['check-resources.png','check-3d.png','check-top-down.png','check-light.png','check-walk.png','check-assets.png','check-mobile.png','check-resources-mobile.png']},null,2)+'\n');
+    console.log(`Checked ${name}: tabs, galleries, zoom, room selection, references, top-down, cutaway, layers, lighting, furniture, assets, mobile, and local image assets.\nScreenshots: ${out}/check-*.png`);
+  } finally {await browser.close();server.close();}
 }

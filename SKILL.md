@@ -20,11 +20,15 @@ was loaded through a discovery symlink.
 | --- | --- |
 | `projects/<name>/brief.md` | Purpose, scope, references, intended look |
 | `projects/<name>/plan.md` | Calibration, evidence, measurements, assumptions |
-| `projects/<name>/home.js` | Source of truth: project text, geometry, photos, theme |
+| `projects/<name>/resources.md` | Resources tab: floor plan, room galleries, extra groups, provenance |
+| `projects/<name>/inventory.md` | Assets tab: furniture and fittings per room, library model ids |
+| `projects/<name>/home.js` | Source of truth: project text, geometry, theme |
 | `projects/<name>/references/` | Original plans, photos, source records |
-| `projects/<name>/assets/` | Small images embedded in the viewer |
+| `projects/<name>/assets/` | Viewer-sized images, loaded by relative path |
 | `projects/<name>/index.html` | Thin page template with build markers |
 | `projects/<name>/out/` | Generated HTML and checks; never edit these as source |
+| `projects/<name>/placements.json` | Library models positioned in the home (metres, rotation) |
+| `library/` | Shared `.glb` models by id, with provenance in `library/README.md` |
 | `kit/` | Reusable geometry, viewer, themes, commands, starter |
 
 The viewer opens on **Resources** (floor plan, room galleries, extra photo groups).
@@ -38,12 +42,22 @@ Change project data for one home; change the kit for behavior shared by homes.
 
 ## Making a home
 
+Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), then
+**assets** (7), then **placement** (8). Model sourcing beyond blockouts is still open.
+
 1. Run `kit/home list`, then `kit/home new <kebab-case-name>`. Existing folders
    are refused. The starter is an explicitly fictional 6 × 4 m room; replace it
    before describing it as a reconstruction. `npm ci` installs pinned dependencies.
-2. Record the user's scope in `brief.md`. Put available source plans and photos
-   under this project's `references/`; keep their provenance. Use `assets/` for
-   smaller images used in the viewer. Do not replace originals with compressed copies.
+2. **Resources first.** Record the user's scope in `brief.md`. Gather every source
+   image before modelling: save full-size originals under `references/` (never
+   replace them with compressed copies) and list each one's URL and what it shows in
+   `references/sources.md`. Listing pages often hide their galleries in embedded JSON
+   (look for image CDN URLs and per-room groupings); request the original size.
+   Make ~1600 px copies in `assets/` named by room (`living-01.jpg`). Check what each
+   photo actually shows — listings misfile bathrooms, balconies and parking — then
+   write `resources.md`: `## Floor plan`, one `##` section per room (named as in
+   `home.js`, or tagged `{#room-id}`), then extra groups. Serve and review the
+   Resources tab before tracing geometry; add the room records it needs.
 3. Establish scale from a labelled plan dimension and record the origin and
    calibration in `plan.md`. Convert to metres once. Printed dimensions remain
    display labels; they are not automatically computed from the trace.
@@ -55,10 +69,21 @@ Change project data for one home; change the kit for behavior shared by homes.
    Preview with `kit/home serve <name>` and refresh after edits. Use
    `kit/home open <name>` for a standalone file without a server.
 6. Run `kit/home check <name>` and inspect the generated screenshots. Review the
-   whole shell, room labels, plan, late light, source images, and mobile layout.
+   whole shell, room labels, top-down view, late light, source images, and mobile layout.
    Source plans remain available if WebGL is unavailable. If the environment
    blocks browser launch or serving, still build and validate the model, and say
    exactly which visual checks could not run. A successful build is not a visual check.
+
+7. **Assets.** Go through every room photo and list what is in it in `inventory.md`:
+   one table row per distinct item with Room (id), Kind (fixture, appliance,
+   furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
+   Reference a `library/` model id where one fits; leave Model empty otherwise.
+   Add models to `library/` with provenance in `library/README.md`; box blockouts can
+   be generated with `node library/blockouts.mjs`. The Assets tab renders each model.
+
+8. **Placement.** Position models in `placements.json` (metres, same plan space as the
+   walls). Use furniture drawn on the source plan when present, else the photos;
+   link each instance to its inventory row with `asset`. Check top-down and 3D.
 
 Continue within the user's authorized scope; this workflow does not impose
 stage-by-stage signoffs. Ask only when missing source evidence or an unresolved
@@ -88,7 +113,8 @@ dependency on `../../minusx/artifactbin` is required.
   interaction, not to imply a different permanent floor finish.
 - Riso’s font definitions and component styles live in `kit/themes/riso.css`.
   Fraunces and Space Mono load from fonts.gstatic.com; system fallbacks keep the
-  export usable offline. Model and image assets remain embedded.
+  export usable offline. Images load from the project folder by relative path, so
+  `out/index.html` works over `file://` or `serve` but is not a single portable file.
 
 ## Editing and checking
 

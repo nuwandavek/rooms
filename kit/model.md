@@ -13,9 +13,42 @@ Required: `title`. Optional: `brand`, `mark`, `subtitle`, `location`,
 Text is plain text; use `\n` for a headline line break.
 
 Images are project-relative JPG, PNG or WebP paths, for example
-`assets/living.jpg`. Builds embed those files. Remote image URLs, paths outside
+`assets/living.jpg`. Builds check them and rewrite them relative to `out/`; they are
+loaded from disk, not embedded. Remote image URLs, paths outside
 the project, and symbolic links to outside files are refused. A missing room
 photo is shown as missing, never replaced with the previously selected room's image.
+
+## resources.md
+
+When a project has `resources.md`, the build reads it after `home.js` (see
+`kit/resources.js`). Each `## Section` is a gallery of `![alt](path)` lines:
+
+- `## Floor plan` sets `floorPlan`; its first image is the plan, its prose the note.
+- A section named like a room (case-insensitive), or tagged `## Name {#room-id}`,
+  sets that room's `photos`. An unknown `{#id}` is an error.
+- Any other section is appended to `resources`.
+
+Other prose is ignored by the parser; use it for provenance.
+
+## inventory.md and library/
+
+When a project has `inventory.md`, every markdown table in it with `Asset` and `Room`
+columns becomes `home.inventory` (see `kit/inventory.js`). Columns: Asset, Room (id or
+name), Kind, Qty (whole number, default 1), Model (a `library/<id>.glb` id), Photos
+(comma-separated; `living-01` means `assets/living-01.jpg`), Notes. Unknown rooms,
+bad quantities and missing library files are build errors.
+
+Library models are shared by all homes, in metres, resting on y = 0, centered on x/z,
+front facing +z. They load with `fetch`, so their previews need `kit/home serve`.
+
+## placements.json
+
+Positions library models in the home: `{"placements":[{model, room, at:[x,z],
+rotation, asset?}]}`. `at` is the footprint center in metres in the same plan space
+as the walls; `rotation` is degrees about the vertical (0 = model front faces +z,
+90 = +x). `asset` links the instance to an inventory row, which the Assets tab
+counts as placed. Positions outside the room polygon are build errors. Furniture
+does not yet block Walk mode.
 
 ## Geometry
 
@@ -50,7 +83,7 @@ Openings are `{start,end,type,bottom,top}`. Offsets are measured from endpoint
 `a` toward `b`, must be ascending, non-overlapping, and fit the segment length.
 `type` is `door`, `window`, or `slider`; bottom and top are elevations in metres.
 Doors use a schematic fixed swing; handedness is not yet a project field.
-Plan mode displays a 0.15 m cutaway and restores the previous slider height in 3D.
+Reset (whole home, angled) and Top-down are camera presets: they move the 3D camera and change nothing else.
 
 ## Tracing an image
 

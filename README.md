@@ -23,7 +23,8 @@ kit/home serve my-next-home
 ```
 
 Open **http://127.0.0.1:4173**. The starter contains a small illustrative room.
-Replace its layout and text in `projects/my-next-home/home.js`, record the scope
+Gather source images first and list them in `resources.md` (the Resources tab
+reads it). Replace the layout and text in `projects/my-next-home/home.js`, record the scope
 in `brief.md`, and keep calibration and assumptions in `plan.md`. Add source
 images in `references/` and smaller viewer images in `assets/` as needed.
 Existing project folders are never overwritten by `new`.
@@ -52,8 +53,9 @@ kit/home open kalpataru-radiance
 ```
 
 This builds and opens `projects/kalpataru-radiance/out/index.html` in your default
-browser. It includes the code, styles, and selected reference images and works
-over `file://` without network access. Re-run `open` after changing source files.
+browser. It includes the code and styles and loads images from the project folder
+by relative path, so it works over `file://` without network access as long as it
+stays inside `projects/<name>/out/`. Re-run `open` after changing source files.
 WebGL is needed for the 3D view; the source plan remains available without it.
 
 All examples run from the repository root. You can also run the absolute path
@@ -64,7 +66,8 @@ to `kit/home` from any directory, or use `npm run home -- <command> <name>`.
 **Resources** opens first: the floor plan, room photo galleries, and other source
 images. Click any image to enlarge it, or use **View in 3D** to focus its room.
 **Home3D** keeps the room list, selected-room photos and thumbnails beside the
-model. View settings includes zoom −/+, wall cutaway, layers and lighting.
+model, with **3D** and **Walk** modes at top left and **↺ Reset** / **Top-down** cameras at
+top right. View settings includes zoom −/+, wall cutaway, layers and lighting.
 The project name, location, bedrooms and floor area live in the collapsible
 **Project details** card at the top right.
 
@@ -77,6 +80,15 @@ full-height walls; switching back to 3D restores the cutaway setting.
 
 To open directly in 3D, visit `http://127.0.0.1:4173/?tab=home3d`.
 
+## Assets tab and model library
+
+**Assets** lists each project's `inventory.md`: every item per room with its kind,
+quantity, the photos it appears in, and a rendered preview when it references a model
+in the shared `library/`. Previews load models over the local server, so use
+`kit/home serve`. Regenerate the box blockouts with `node library/blockouts.mjs`.
+`placements.json` puts library models into the 3D home (toggle with **Furniture** in
+View settings); see `kit/model.md` for the format.
+
 ## Build and check
 
 ```sh
@@ -87,8 +99,8 @@ kit/home check kalpataru-radiance
 
 `build` validates geometry and image paths and creates the standalone HTML in
 the project's `out/`. `check` also opens a browser, exercises room selection,
-plan/3D modes, cutaway, layer toggles, lighting, references, and mobile layout,
-and writes `out/check.json` plus `out/check-{3d,plan,light,mobile}.png`
+3D/Walk modes, camera presets, cutaway, layer toggles, lighting, references, and mobile layout,
+and writes `out/check.json` plus `out/check-{3d,top-down,light,walk,mobile}.png`
 and resource screenshots (`check-resources.png`, `check-resources-mobile.png`).
 Look at the screenshots; the automated check cannot judge visual quality.
 
@@ -117,11 +129,14 @@ kit/
 projects/
   kalpataru-radiance/
     brief.md / plan.md        Intent, evidence, assumptions
+    resources.md              Resources tab galleries and image provenance
+    inventory.md              Assets tab: furniture and fittings per room
     home.js                   This home's model and presentation data
     index.html                Page template used by the build
-    assets/                   Small viewer images
+    assets/                   Viewer-sized images
     references/               Original photos, plan and provenance
     out/                      Generated exports and checks (gitignored)
+library/                      Shared .glb models and their provenance
 archive/                      The entire previous version
 ```
 
@@ -147,7 +162,7 @@ afternoon. Lighting is illustrative, not a sun-path or illuminance calculation.
 The 3D palette and light setup live in `kit/themes.js`; exact source palette
 snapshots and principles live in `kit/themes/`. Riso loads Fraunces and Space Mono from Google Fonts (fonts.gstatic.com), using
 Artifactbin’s pinned font definitions. System fonts are the offline fallback;
-the model and photographs remain embedded in the export.
+photographs load from the project folder.
 
 ## Skill
 
