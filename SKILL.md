@@ -20,16 +20,24 @@ was loaded through a discovery symlink.
 | --- | --- |
 | `projects/<name>/brief.md` | Purpose, scope, references, intended look |
 | `projects/<name>/plan.md` | Calibration, evidence, measurements, assumptions |
-| `projects/<name>/home.js` | Source of truth: project text, geometry, photos, theme |
+| `projects/<name>/resources.md` | Resources tab: floor plan, room galleries, extra groups, provenance |
+| `projects/<name>/inventory.md` | Assets tab: furniture and fittings per room, library model ids |
+| `projects/<name>/home.js` | Source of truth: project text, geometry, theme |
 | `projects/<name>/references/` | Original plans, photos, source records |
-| `projects/<name>/assets/` | Small images embedded in the viewer |
+| `projects/<name>/assets/` | Viewer-sized images, loaded by relative path |
 | `projects/<name>/index.html` | Thin page template with build markers |
 | `projects/<name>/out/` | Generated HTML and checks; never edit these as source |
+| `projects/<name>/fitout.json` | Finishes (floors, wall faces and bands, doors, frames) and built-ins |
+| `projects/<name>/placements.json` | Library models positioned in the home (metres, rotation) |
+| `library/` | Shared `.glb` models by id, with provenance in `library/README.md` |
 | `kit/` | Reusable geometry, viewer, themes, commands, starter |
 
-The viewer opens on **Resources** (floor plan, room galleries, extra photo groups).
-**Home3D** contains room focus, room photographs, and camera/layer/light controls.
-Use `?tab=home3d` to open directly in 3D. Keep metadata in the collapsible Project details card;
+Tabs follow the stages: **1 Resources** (floor plan, room galleries, extra photo
+groups), **2 Assets** (inventory), then one shared 3D viewer as **3 Shell**,
+**4 Fit-out** (plus built-ins and finishes; `fixture` rows for now) and **5 Furnished**
+(plus loose items), with room focus, room photographs, and camera/layer/light controls.
+Use `?tab=shell`, `fitout`, `furnished` or `realistic` to open a stage directly, and
+`&mode=walk` to start in Walk mode. Keep metadata in the collapsible Project details card;
 do not add promotional intro copy or a plan-orientation indicator.
 
 A home supplies data to `mount(home)`. Shared viewer code must not contain a
@@ -38,12 +46,22 @@ Change project data for one home; change the kit for behavior shared by homes.
 
 ## Making a home
 
+Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), then
+**assets** (7), then **placement** (8). Model sourcing beyond blockouts is still open.
+
 1. Run `kit/home list`, then `kit/home new <kebab-case-name>`. Existing folders
    are refused. The starter is an explicitly fictional 6 × 4 m room; replace it
    before describing it as a reconstruction. `npm ci` installs pinned dependencies.
-2. Record the user's scope in `brief.md`. Put available source plans and photos
-   under this project's `references/`; keep their provenance. Use `assets/` for
-   smaller images used in the viewer. Do not replace originals with compressed copies.
+2. **Resources first.** Record the user's scope in `brief.md`. Gather every source
+   image before modelling: save full-size originals under `references/` (never
+   replace them with compressed copies) and list each one's URL and what it shows in
+   `references/sources.md`. Listing pages often hide their galleries in embedded JSON
+   (look for image CDN URLs and per-room groupings); request the original size.
+   Make ~1600 px copies in `assets/` named by room (`living-01.jpg`). Check what each
+   photo actually shows — listings misfile bathrooms, balconies and parking — then
+   write `resources.md`: `## Floor plan`, one `##` section per room (named as in
+   `home.js`, or tagged `{#room-id}`), then extra groups. Serve and review the
+   Resources tab before tracing geometry; add the room records it needs.
 3. Establish scale from a labelled plan dimension and record the origin and
    calibration in `plan.md`. Convert to metres once. Printed dimensions remain
    display labels; they are not automatically computed from the trace.
@@ -55,10 +73,28 @@ Change project data for one home; change the kit for behavior shared by homes.
    Preview with `kit/home serve <name>` and refresh after edits. Use
    `kit/home open <name>` for a standalone file without a server.
 6. Run `kit/home check <name>` and inspect the generated screenshots. Review the
-   whole shell, room labels, plan, late light, source images, and mobile layout.
+   whole shell, room labels, top-down view, late light, source images, and mobile layout.
    Source plans remain available if WebGL is unavailable. If the environment
    blocks browser launch or serving, still build and validate the model, and say
    exactly which visual checks could not run. A successful build is not a visual check.
+
+7. **Assets.** Go through every room photo and list what is in it in `inventory.md`:
+   one table row per distinct item with Room (id), Kind (fixture, appliance,
+   furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
+   Estimate Dims (w×h×d) and a Colour hint per row. For Model, use a catalog id from
+   `library/catalog.json` where one fits (as is, a modified copy, or a new generator in
+   `library/generators/`; see `library/README.md`), or a primitive such as `@frame`,
+   `@rug`, `@curtain`, `@box` for low-stakes items. The Assets tab renders each one.
+
+8. **Fit-out.** Write `fitout.json` from the photos: floor and wall finishes per room
+   (wet rooms usually tiled to a band), door and frame materials, and built-ins such
+   as kitchen counters. Add missing materials to `library/materials.json`. Check the
+   Fit-out tab with Walk-mode views from where the photos were taken.
+
+9. **Placement.** Position models in `placements.json` (metres, same plan space as the
+   walls), one entry per instance linked to its inventory row with `asset`. Staging
+   photos win over furniture drawn on the plan when they disagree; note it in the row.
+   Check top-down, then Walk-mode views from where the photos were taken.
 
 Continue within the user's authorized scope; this workflow does not impose
 stage-by-stage signoffs. Ask only when missing source evidence or an unresolved
@@ -81,14 +117,15 @@ dependency on `../../minusx/artifactbin` is required.
 - **Drafting:** cool vellum, cobalt annotations, technical type, crisp framing,
   a subtle ground grid, and cooler neutral materials. Set `theme: 'drafting'` in
   the project; do not fork the viewer.
-- Light presets are illustrative studio choices. “Late afternoon” changes
-  direction, warmth and ambient light; it is not a geolocated solar simulation.
+- Light presets are illustrative studio choices. “Night” swaps the sun for faint
+  moonlight and turns lamps on; it is not a geolocated solar simulation.
   Do not claim true north, a measured light level, or a certified architectural plan.
 - Preserve material meaning across rooms. Use the selected-room treatment for
   interaction, not to imply a different permanent floor finish.
 - Riso’s font definitions and component styles live in `kit/themes/riso.css`.
   Fraunces and Space Mono load from fonts.gstatic.com; system fallbacks keep the
-  export usable offline. Model and image assets remain embedded.
+  export usable offline. Images load from the project folder by relative path, so
+  `out/index.html` works over `file://` or `serve` but is not a single portable file.
 
 ## Editing and checking
 
@@ -96,8 +133,11 @@ For layout feedback, change `home.js` and update the relevant assumptions in
 `plan.md`. For material/lighting feedback across all homes, change `kit/themes.js`.
 For a new capability needed by one project, keep its project data separate from
 reusable rendering behavior. The current kit covers architectural shells; it
-does not yet provide a furniture library or multi-storey model. Walk mode uses
-a 1.65 m eye-height perspective camera, WASD, drag or pointer-lock look, and
+does not yet provide a furniture library or multi-storey model. Lighting assumes a roof: an undrawn
+roof slab casts shadows, so sunlight enters only through openings, and Walk mode shows
+a ceiling. Walk mode uses
+a 1.65 m eye-height perspective camera, click-to-walk with a floor ring, grab-style
+drag to look, WASD/arrows/Q-E/scroll, optional pointer-lock look, and
 plan-based wall/doorway collision in `kit/walk.js`. Keep its geometry checks when
 changing openings or coordinates. Switching tabs or opening dialogs stops movement.
 

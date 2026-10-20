@@ -12,7 +12,7 @@ async function rebuild(name) {
   return resolve(projectPath(name),'out/index.html');
 }
 
-// Serve a rebuilt, self-contained project on every page request. No file watcher
+// Serve a rebuilt project on every page request. No file watcher
 // or additional bundler process; edit project or kit code and refresh the page.
 export async function serveProject(name,port=4173) {
   projectPath(name);
@@ -29,12 +29,21 @@ export async function serveProject(name,port=4173) {
         res.end(req.method==='HEAD'?undefined:await readFile(file));return;
       }
       if(url.pathname==='/favicon.ico'){res.writeHead(204).end();return;}
-      // Project reference images may be opened directly; never expose archive or other projects.
+      // Shared library models and Realistic-tab textures.
+      if(url.pathname.startsWith('/library/')) {
+        const library=await realpath(resolve(root,'library'));
+        const file=await realpath(resolve(library,'.'+decodeURIComponent(url.pathname.slice('/library'.length))));
+        const rel=relative(library,file);
+        const type={'.glb':'model/gltf-binary','.jpg':'image/jpeg','.hdr':'image/vnd.radiance'}[extname(file)];
+        if(rel.startsWith('..')||!type){res.writeHead(403).end();return;}
+        res.writeHead(200,{'Content-Type':type});res.end(req.method==='HEAD'?undefined:await readFile(file));return;
+      }
+      // Viewer images and references are served from the project; never expose archive or other projects.
       const project=await realpath(projectPath(name));
       const file=await realpath(resolve(project,'.'+decodeURIComponent(url.pathname)));
       const rel=relative(project,file);
       if(rel==='..'||rel.startsWith('..'+sep)){res.writeHead(403).end();return;}
-      const mime={'.jpg':'image/jpeg','.png':'image/png','.webp':'image/webp','.md':'text/plain; charset=utf-8','.json':'application/json'}[extname(file)];
+      const mime={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.md':'text/plain; charset=utf-8','.json':'application/json'}[extname(file)];
       if(!mime){res.writeHead(404).end();return;}
       res.writeHead(200,{'Content-Type':mime});res.end(req.method==='HEAD'?undefined:await readFile(file));
     } catch(error) {

@@ -1,5 +1,8 @@
 export const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeLink = value => /^https?:\/\//.test(value || '') ? escape(value) : '#';
+import {previewModel,previewObject} from './preview.js';
+import {buildPrimitive} from './primitives.js';
+
 export const roomPhotos = room => [...new Set([room?.photo,...(room?.photos || [])].filter(Boolean))];
 
 export function markup(home) {
@@ -8,11 +11,32 @@ export function markup(home) {
   const gallery=groups.map((group,i)=>`<article class="resource-room" id="resource-room-${escape(group.id || `extra-${i}`)}">
     <div class="resource-room-heading"><div><h3>${escape(group.name)}</h3><p>${escape(group.dimension)}</p></div>${group.id?`<button class="quiet-button" data-focus-room="${escape(group.id)}">View in 3D ↗</button>`:''}</div>
     <div class="resource-photos">${group.photos.length?group.photos.map((src,j)=>`<button class="resource-photo" data-photo-group="${i}" data-photo-index="${j}" aria-label="Enlarge ${escape(group.name)} photo ${j+1}"><img src="${escape(src)}" alt="${escape(group.name)} — reference ${j+1}" loading="lazy"><span>${String(j+1).padStart(2,'0')} / ${String(group.photos.length).padStart(2,'0')} <b>↗</b></span></button>`).join(''):'<p class="empty-resource">No reference photos added yet.</p>'}</div></article>`).join('');
+  const inventory=home.inventory || [];
+  const assetRooms=home.model.rooms.map(room=>({room,items:inventory.map((asset,i)=>({asset,i})).filter(({asset})=>asset.room===room.id)})).filter(g=>g.items.length);
+  const modelled=inventory.filter(a=>a.model).length;
+  const placedCount=asset=>(home.placements || []).filter(p=>p.asset===asset.name&&p.room===asset.room).length;
+  const assetTable=assetRooms.map(({room,items})=>`<article class="asset-room" id="asset-room-${escape(room.id)}">
+    <div class="resource-room-heading"><div><h3>${escape(room.name)}</h3><p>${items.length} ${items.length===1?'asset':'assets'} · ${items.reduce((n,{asset})=>n+asset.qty,0)} pieces</p></div><button class="quiet-button" data-focus-room="${escape(room.id)}">View in 3D ↗</button></div>
+    <table class="asset-table"><thead><tr><th>Model</th><th>Asset</th><th>Kind</th><th>Qty</th><th>Placed</th><th>Seen in</th><th>Notes</th></tr></thead><tbody>
+    ${items.map(({asset,i})=>`<tr>
+      <td>${asset.modelUrl?`<div class="asset-preview" data-model="${escape(asset.modelUrl)}"><span>Rendering…</span></div>`
+        :asset.model==='@fitout'?'<div class="asset-preview empty"><span>In fit-out</span></div>'
+        :asset.model?.startsWith('@')?`<div class="asset-preview" data-primitive="${i}"><span>Rendering…</span></div>`
+        :'<div class="asset-preview empty"><span>No model yet</span></div>'}</td>
+      <td><strong>${escape(asset.name)}</strong>${asset.model?`<small>${escape(asset.model)}${asset.dims?` · fitted to ${asset.dims.map(v=>v.toFixed(2)).join(' × ')} m`:`<span class="asset-size" data-size-for="${escape(asset.modelUrl || '')}"></span>`}</small>`:''}</td>
+      <td><span class="asset-kind">${escape(asset.kind)}</span></td><td>${asset.qty}</td><td>${asset.model==='@fitout'?'<span class="asset-placed done">fit-out</span>':placedCount(asset)?`<span class="asset-placed${placedCount(asset)>=asset.qty?' done':''}">${placedCount(asset)} / ${asset.qty}</span>`:'<span class="asset-placed">—</span>'}</td>
+      <td><div class="asset-photos">${asset.photos.map((src,j)=>`<button data-asset="${i}" data-asset-photo="${j}" aria-label="${escape(asset.name)} photo ${j+1}"><img src="${escape(src)}" alt="" loading="lazy"></button>`).join('')}</div></td>
+      <td class="asset-notes">${escape(asset.notes)}</td></tr>`).join('')}
+    </tbody></table></article>`).join('');
   return `<div class="viewer-bar">
     <a class="brand compact-brand" data-text="rooms." href="#" aria-label="rooms. home resources">rooms.</a>
     <div class="tab-bar" role="tablist" aria-label="Project views">
-      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources">Resources</button>
-      <button id="tab-home3d" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1">Home3D</button>
+      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources"><span class="tab-step">1.</span>Resources</button>
+      <button id="tab-assets" role="tab" aria-selected="false" aria-controls="panel-assets" tabindex="-1"><span class="tab-step">2.</span>Assets</button>
+      <button id="tab-shell" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Walls, rooms and openings"><span class="tab-step">3.</span>Shell</button>
+      <button id="tab-fitout" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
+      <button id="tab-furnished" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
+      <button id="tab-realistic" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="The furnished home with realistic lighting and materials"><span class="tab-step">6.</span>Realistic</button>
     </div>
     <details class="project-details"><summary>Project details <span>＋</span></summary><div class="project-details-body">
       <div class="project-card-title"><span class="brand-mark">${escape(home.mark || 'h.')}</span><h2>${escape(home.brand || home.title)}</h2></div>
@@ -27,7 +51,12 @@ export function markup(home) {
     <section class="resource-section"><div class="resource-section-heading"><h2>Rooms & references</h2><span>02 / THE PHOTOGRAPHS</span></div>${gallery}</section>
     <p class="source-note">${escape(source.note)} ${source.url?`<a href="${safeLink(source.url)}" target="_blank" rel="noreferrer">${escape(source.label || 'Source')} ↗</a>`:''}</p>
   </section>
-  <main id="panel-home3d" role="tabpanel" aria-labelledby="tab-home3d" hidden>
+  <section id="panel-assets" class="resources-panel assets-panel" role="tabpanel" aria-labelledby="tab-assets" tabindex="0" hidden>
+    <section class="resource-section"><div class="resource-section-heading"><h1>Assets</h1><span>03 / THE INVENTORY</span></div>
+      ${inventory.length?`<p class="resource-note">${inventory.length} assets across ${assetRooms.length} rooms · ${modelled} with a library model · ${(home.placements || []).length} placed in the 3D home.</p>${assetTable}`:'<p class="empty-resource">No inventory.md yet.</p>'}
+    </section>
+  </section>
+  <main id="panel-home3d" role="tabpanel" aria-labelledby="tab-furnished" hidden>
     <aside class="sidebar">
       <div class="section-title">Explore the rooms <span>${String(home.model.rooms.filter(r=>r.featured).length).padStart(2,'0')}</span></div>
       <nav id="room-list" aria-label="Select a room"></nav>
@@ -39,17 +68,19 @@ export function markup(home) {
       <button id="browse-resources" class="all-rooms">Browse all resources ↗</button>
     </aside>
     <section class="viewport" aria-label="Interactive home model">
-      <div id="scene"></div><div id="labels"></div>
-      <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">3D view</button><button id="plan-button" aria-pressed="false">Plan view</button><button id="walk-button" aria-pressed="false">Walk</button></div><button id="reset-camera" class="icon-button" title="Reset camera" aria-label="Reset camera">↺</button></div>
+      <div id="scene"></div><div id="labels"></div><div id="lock-hint" class="lock-hint" role="status" hidden>Mouse look · Press <kbd>Esc</kbd> to exit</div>
+      <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">3D</button><button id="walk-button" aria-pressed="false">Walk</button></div></div>
+      <div class="segmented camera-presets" id="camera-presets" role="group" aria-label="Camera"><button id="reset-camera" title="Whole home, default camera">↺ Reset</button><button id="top-view">Top-down</button></div>
       <details class="settings" open><summary>View settings <span>＋</span></summary>
-        <button id="mouse-look" class="quiet-button" hidden>Mouse look ↗</button>
+        <button id="mouse-look" class="quiet-button" aria-pressed="false" hidden>Mouse look ↗</button>
         <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-output" aria-label="Zoom level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button></div>
         <label class="switch-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
-        <label class="switch-row">Doors & glazing<input id="openings-toggle" type="checkbox" checked></label>
+        <label class="switch-row">Doors closed<input id="doors-closed" type="checkbox"></label>
         <div class="wall-label"><label for="wall-height">Wall cutaway</label><output id="height-output"></output></div>
         <input id="wall-height" aria-label="Visible wall height" type="range" min="0.15" max="${home.model.wallHeight}" step="0.05" value="${home.model.cutaway}">
         <div class="range-labels"><span>LOW</span><button id="full-height">Full height ↗</button></div>
-        <label class="lighting-label" for="lighting">Light study</label><select id="lighting"><option value="daylight">Soft daylight</option><option value="afternoon">Late afternoon</option></select>
+        <div class="lighting-label" id="lighting-label">Light study</div><div class="segmented light-study" role="group" aria-labelledby="lighting-label"><button id="light-day" aria-pressed="true">☀ Day</button><button id="light-night" aria-pressed="false">☾ Night</button></div>
+        <button id="reset-settings" class="quiet-button">↺ Reset settings</button>
         <small class="lighting-note">Illustrative lighting</small>
       </details>
       <div class="selection-info" id="selection-info" aria-live="polite"></div>
@@ -62,17 +93,25 @@ export function markup(home) {
 }
 
 // Resources and dialogs work even when WebGL is unavailable.
-export function setupUI(home,target,onRoom) {
+// Tabs follow the authoring stages. Shell, Fit-out and Furnished share the 3D panel and
+// add layers left to right; `onStage` tells the viewer which one is showing.
+export const STAGES=['shell','fitout','furnished','realistic'];
+export function setupUI(home,target,onRoom,onStage=()=>{}) {
   const get=id=>target.querySelector(`#${id}`);
-  let tab='resources';
-  const tabs=['resources','home3d'];
+  let tab='resources',stage='furnished';
+  const tabs=['resources','assets',...STAGES];
+  const panel=key=>STAGES.includes(key)?'home3d':key;
+  let previewsStarted=false;
   function setTab(name,updateURL=true) {
+    if(name==='home3d')name=stage;  // Older links and the room buttons open the last 3D stage.
     tab=tabs.includes(name)?name:'resources';
+    for(const key of ['resources','assets','home3d'])get(`panel-${key}`).hidden=key!==panel(tab);
     for(const key of tabs) {
-      get(`panel-${key}`).hidden=key!==tab;
       get(`tab-${key}`).setAttribute('aria-selected',String(key===tab));
       get(`tab-${key}`).tabIndex=key===tab?0:-1;
     }
+    if(STAGES.includes(tab)){stage=tab;get('panel-home3d').setAttribute('aria-labelledby',`tab-${tab}`);onStage(stage);}
+    if(tab==='assets'&&!previewsStarted){previewsStarted=true;renderPreviews();}
     if(updateURL) {
       const url=new URL(location.href);url.searchParams.set('tab',tab);
       try{history.replaceState(null,'',url);}catch{/* Some file:// viewers disallow history updates. */}
@@ -82,7 +121,7 @@ export function setupUI(home,target,onRoom) {
     const button=get(`tab-${key}`);button.onclick=()=>setTab(key);
     button.onkeydown=e=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
-      e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?1:(i+1)%2;
+      e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowLeft'?tabs.length-1:1))%tabs.length;
       setTab(tabs[next]);get(`tab-${tabs[next]}`).focus();
     };
   }
@@ -98,7 +137,26 @@ export function setupUI(home,target,onRoom) {
     const group=groups[Number(button.dataset.photoGroup)],index=Number(button.dataset.photoIndex);
     showPhoto(group.photos[index],`${group.name} · ${index+1} / ${group.photos.length}`);
   });
-  target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get('tab-home3d').focus();});
+  target.querySelectorAll('[data-asset-photo]').forEach(button=>button.onclick=()=>{
+    const asset=home.inventory[Number(button.dataset.asset)],index=Number(button.dataset.assetPhoto);
+    showPhoto(asset.photos[index],`${asset.name} · ${index+1} / ${asset.photos.length}`);
+  });
+  // Model thumbnails render when the Assets tab first opens.
+  function renderPreviews() {
+    target.querySelectorAll('[data-model]').forEach(cell=>previewModel(cell.dataset.model).then(({src,size})=>{
+      cell.innerHTML=`<img src="${src}" alt="">`;
+      target.querySelectorAll(`[data-size-for="${CSS.escape(cell.dataset.model)}"]`).forEach(s=>s.textContent=` · ${size.map(v=>v.toFixed(2)).join(' × ')} m`);
+    }).catch(()=>{
+      cell.classList.add('empty');
+      cell.innerHTML=`<span>${location.protocol==='file:'?'Use kit/home serve to preview':'Model failed to load'}</span>`;
+    }));
+    target.querySelectorAll('[data-primitive]').forEach(cell=>{
+      const asset=home.inventory[Number(cell.dataset.primitive)];
+      previewObject(`${asset.model}|${asset.dims}|${asset.colour}`,async()=>buildPrimitive(asset.model.slice(1),asset.dims,asset.colour))
+        .then(({src})=>cell.innerHTML=`<img src="${src}" alt="">`);
+    });
+  }
+  target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get(`tab-${tab}`).focus();});
   setTab(new URLSearchParams(location.search).get('tab'),false);
-  return {setTab,showPhoto,get tab(){return tab;}};
+  return {setTab,showPhoto,get tab(){return tab;},get in3d(){return STAGES.includes(tab);},get stage(){return stage;}};
 }

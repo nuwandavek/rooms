@@ -47,7 +47,7 @@ html[data-theme=riso] .compact-brand::after {
 }
 html[data-theme=riso] .compact-brand::before { color: var(--pink); transform: translate(.045em,.03em); }
 html[data-theme=riso] .compact-brand::after { color: var(--yellow); transform: translate(-.035em,.05em); }
-html[data-theme=riso] :is(.tab-bar > button, .quiet-button, .icon-button, .zoom-controls button, .project-details summary) {
+html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary) {
   border: 2px solid var(--ink);
   background: var(--sheet);
   color: var(--ink);
@@ -57,10 +57,16 @@ html[data-theme=riso] :is(.tab-bar > button, .quiet-button, .icon-button, .zoom-
   transition: transform .12s, box-shadow .12s, background .12s;
 }
 html[data-theme=riso] :is(.quiet-button, .project-details summary) { padding: 9px 12px; }
-html[data-theme=riso] .tab-bar > button { margin: 10px 0; padding: 0 12px; text-transform: uppercase; }
-html[data-theme=riso] .tab-bar > button[aria-selected=true] { background: var(--yellow); }
-html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary, .tab-bar > button):hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
-html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary, .tab-bar > button):active { transform: translate(3px,3px); box-shadow: none; }
+/* Project tabs: one joined control, like the camera segmented buttons. */
+html[data-theme=riso] .viewer-bar .tab-bar { border-radius: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .tab-bar > button { padding: 9px 16px; color: var(--ink); font: 400 11px/1.4 var(--font-mono); letter-spacing: .035em; text-transform: uppercase; transition: background .12s; }
+html[data-theme=riso] .tab-bar > button + button { border-left: 2px solid var(--ink); }
+html[data-theme=riso] .tab-bar > button:hover { background: var(--manila); }
+html[data-theme=riso] .tab-step { opacity: .55; margin-right: 7px; }
+html[data-theme=riso] .tab-bar > button[aria-selected=true] .tab-step { opacity: 1; }
+html[data-theme=riso] .viewer-bar .tab-bar > button[aria-selected=true] { background: var(--yellow); color: var(--ink); }
+html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary):hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary):active { transform: translate(3px,3px); box-shadow: none; }
 html[data-theme=riso] .quiet-button { background: var(--accent); color: var(--onAccent); text-transform: uppercase; }
 html[data-theme=riso] .project-details[open] summary { background: var(--pink); }
 html[data-theme=riso] :is(.settings, .project-details-body, .floor-plan-preview, dialog) {
@@ -113,7 +119,7 @@ html[data-theme=riso] .room-thumbnails button[aria-pressed=true] { border-color:
 html[data-theme=riso] .segmented { padding: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
 html[data-theme=riso] .segmented button { padding: 9px 12px; font: 400 10px/1.4 var(--font-mono); }
 html[data-theme=riso] .segmented button + button { border-left: 1px solid var(--ink); }
-html[data-theme=riso] .segmented button.active { background: var(--accent); color: var(--onAccent); }
+html[data-theme=riso] :is(.segmented button.active, .light-study button[aria-pressed=true]) { background: var(--accent); color: var(--onAccent); }
 html[data-theme=riso] .settings { font: 400 10px/1.5 var(--font-mono); }
 html[data-theme=riso] .settings summary { font: 700 11px/1.5 var(--font-mono); border-color: var(--ink); }
 html[data-theme=riso] .settings select { background: var(--sheet); border: 1px solid var(--ink); font: 400 10px/1.5 var(--font-mono); }
@@ -138,3 +144,10 @@ html[data-theme=riso] dialog::backdrop { background: #1C2340b3; backdrop-filter:
 @media (prefers-reduced-motion:reduce) {
   html[data-theme=riso] :is(button, summary) { transition: none; }
 }
+html[data-theme=riso] .asset-preview { border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .asset-table th { color: var(--ink); border-bottom: 2px solid var(--ink); }
+html[data-theme=riso] .asset-table td { border-bottom: 1px dashed var(--ink); }
+html[data-theme=riso] .asset-kind { background: var(--manila); padding: 2px 6px; border: 1px solid var(--ink); }
+html[data-theme=riso] .asset-photos button { border: 1.5px solid var(--ink); }
+html[data-theme=riso] .lock-hint{font:400 10px/1.4 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;border:2px solid var(--ink);background:var(--yellow);color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+html[data-theme=riso] #mouse-look[aria-pressed=true]{background:var(--yellow);color:var(--ink)}

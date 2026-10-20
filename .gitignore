@@ -3,3 +3,5 @@ node_modules/
 projects/*/out/
 archive/
 projects/
+library/models
+library/textures/

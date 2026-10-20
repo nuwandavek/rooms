@@ -5,7 +5,7 @@ export default {
   brand: 'HOME STUDY',
   mark: 'h.',
   theme: 'riso',
-  lighting: 'daylight',
+  lighting: 'day',
   location: '',
   stats: [],
   source: {note: 'Illustrative starter geometry. Replace with a sourced layout.'},

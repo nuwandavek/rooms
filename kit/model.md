@@ -9,13 +9,85 @@ Required: `title`. Optional: `brand`, `mark`, `subtitle`, `location`,
 `stats: [{value,unit,label}]`,
 `source: {label,url,note}`, `floorPlan: {image,alt,note}`,
 `resources: [{name,photos: [imagePath,...]}]` for additional photo groups,
-`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'daylight' | 'afternoon'`.
+`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'day' | 'night'` (the starting light study).
 Text is plain text; use `\n` for a headline line break.
 
 Images are project-relative JPG, PNG or WebP paths, for example
-`assets/living.jpg`. Builds embed those files. Remote image URLs, paths outside
+`assets/living.jpg`. Builds check them and rewrite them relative to `out/`; they are
+loaded from disk, not embedded. Remote image URLs, paths outside
 the project, and symbolic links to outside files are refused. A missing room
 photo is shown as missing, never replaced with the previously selected room's image.
+
+## resources.md
+
+When a project has `resources.md`, the build reads it after `home.js` (see
+`kit/resources.js`). Each `## Section` is a gallery of `![alt](path)` lines:
+
+- `## Floor plan` sets `floorPlan`; its first image is the plan, its prose the note.
+- A section named like a room (case-insensitive), or tagged `## Name {#room-id}`,
+  sets that room's `photos`. An unknown `{#id}` is an error.
+- Any other section is appended to `resources`.
+
+Other prose is ignored by the parser; use it for provenance.
+
+## inventory.md and library/
+
+When a project has `inventory.md`, every markdown table in it with `Asset` and `Room`
+columns becomes `home.inventory` (see `kit/inventory.js`). Columns: Asset, Room (id or
+name), Kind, Qty (whole number, default 1), Dims (w×h×d metres, estimated), Colour
+(`#rrggbb` hint), Model, Photos (comma-separated; `living-01` means
+`assets/living-01.jpg`), Notes. Unknown rooms, bad quantities, uncatalogued ids and
+missing model files are build errors.
+
+Model is either an id from `library/catalog.json` or a **primitive** built at load time
+from Dims and Colour, with no library file (`kit/primitives.js`): `@frame`, `@mirror`,
+`@mirror-arch`, `@rug`, `@curtain`, `@glass`, `@box`. `@fitout` marks a row built by
+`fitout.json` (kitchen cabinets, sink, a floor finish); it is counted as done and is
+never placed. Use primitives for low-stakes flat or boxy
+items (prints, mirrors, rugs, curtains, AC units); use library models for pieces with
+character. Placed library models are scaled to the row's Dims and tinted toward its
+Colour; the build notes stretches beyond about 0.6–1.67× per axis.
+
+Library models are shared by all homes, in metres, resting on y = 0, centered on x/z,
+front facing +z. They load with `fetch`, so their previews need `kit/home serve`.
+
+## placements.json
+
+Positions inventory items in the home: `{"placements":[{asset, room, at:[x,z],
+rotation, y?, model?}]}`, one entry per instance. `asset` names the inventory row,
+whose Model, Dims and Colour the instance uses (`model` overrides). `at` is the
+footprint center in metres in the same plan space as the walls; `rotation` is degrees
+about the vertical (0 = front faces +z, 90 = +x); `y` lifts the base (lamps on tables,
+wall-hung prints and AC units; set `at` half the item's depth off the wall face).
+Positions outside the room polygon and more instances than the row's Qty are build
+errors. Items whose `y` is above the wall cutaway are hidden with the wall. Furniture
+does not yet block Walk mode.
+
+## fitout.json
+
+Everything fixed to the shell, shown on the Fit-out and Furnished tabs (Shell stays
+plain): finishes and built-ins. Materials come from the shared `library/materials.json`
+(procedural kinds `paint`, `tiles`, `marble`, `speckle`, `wood`, `stripes`, sized in
+metres; see `kit/materials.js`).
+
+```json
+{"floors": {"*": "marble-beige-tile", "kitchen": "granite-grey-speckle"},
+ "walls": [{"room": "*", "material": "paint-warm-white"},
+           {"room": "bath-3", "to": 0.9, "material": "stripes-taupe"}],
+ "doors": "walnut", "doorFrames": "black-matt", "windowFrames": "aluminium-white",
+ "builtins": [{"type": "counter", "room": "kitchen", "path": [[9.83,-2.91],[12.46,-2.91],[12.46,0.67]],
+               "depth": 0.6, "height": 0.9, "top": "granite-black", "base": "oak-laminate",
+               "plinth": "black-matt", "sink": {"at": 1.0, "width": 0.8},
+               "uppers": {"bottom": 1.45, "top": 2.2, "depth": 0.35, "material": "laminate-white"}}]}
+```
+
+Floors map a room id or `*` to a material. Wall rules finish each wall face by the
+room it looks into, optionally within a height band `from`–`to`; later rules win, and
+faces looking outside stay plain. A counter's `path` is its back edge in plan metres
+(usually along wall faces); it extends `depth` to the right of travel (`"side": "left"`
+flips it), and `sink.at` is metres along the path. Unknown rooms or materials, bad
+bands and malformed built-ins are build errors (`kit/fitout.js`). Built-ins do not yet
+block Walk mode.
 
 ## Geometry
 
@@ -40,7 +112,7 @@ zero-area polygons; it does not detect every self-intersection, overlap or traci
 Room records: `{id,name,center,polygon,featured?,dimension?,photo?,photos?,surface?}`.
 `photos` is an array of project-relative image paths. The optional `photo` is the
 cover image; the viewer deduplicates it against `photos`. Resources shows the
-complete gallery; selecting a room in Home3D shows its gallery and thumbnails.
+complete gallery; selecting a room in the 3D tabs shows its gallery and thumbnails.
 `id` is unique kebab-case. `center` locates the label and camera focus.
 `featured: true` shows the room in navigation; all rooms have clickable floors.
 `surface` is `floor`, `wet`, or `balcony`. `dimension` is a display label copied
@@ -50,7 +122,7 @@ Openings are `{start,end,type,bottom,top}`. Offsets are measured from endpoint
 `a` toward `b`, must be ascending, non-overlapping, and fit the segment length.
 `type` is `door`, `window`, or `slider`; bottom and top are elevations in metres.
 Doors use a schematic fixed swing; handedness is not yet a project field.
-Plan mode displays a 0.15 m cutaway and restores the previous slider height in 3D.
+Reset (whole home, angled) and Top-down are camera presets: they move the 3D camera and change nothing else.
 
 ## Tracing an image
 
