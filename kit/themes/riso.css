@@ -1,0 +1,140 @@
+/* Riso fonts from Artifactbin’s cached Google Fonts definitions. */
+@font-face { font-family: "Fraunces"; font-style: italic; font-weight: 500; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NUs8FyLNQOQZAnv9ZwNjucMHVn85Ni7emDWtFKqZTnbB-gzTK0KVBdJdt9hFwpX9W37lm1_mvMiQublWIIkfg.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Fraunces"; font-style: italic; font-weight: 500; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NUs8FyLNQOQZAnv9ZwNjucMHVn85Ni7emDWtFKqZTnbB-gzTK0KVBdJdt9hFwpX9W37lm1_mv0iQublWII.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Fraunces"; font-style: normal; font-weight: 500; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92usiIk_WBq8U_9v0c2WS01xCFTeP2Xz5fU8w.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Fraunces"; font-style: normal; font-weight: 500; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92usiIk_WBq8U_9v0c2WS01xC9TeP2Xz5c.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Fraunces"; font-style: normal; font-weight: 900; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92usiIk_WBq8U_9v0c2WS01xCFTeP2Xz5fU8w.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Fraunces"; font-style: normal; font-weight: 900; font-display: swap; src: url(https://fonts.gstatic.com/s/fraunces/v38/6NU78FyLNQOQZAnv9bYEvDiIdE9Ea92usiIk_WBq8U_9v0c2WS01xC9TeP2Xz5c.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Mono"; font-style: italic; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dNIFZifjKcF5UAWdDRYERMSXK_MQacb0yG.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Mono"; font-style: italic; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dNIFZifjKcF5UAWdDRYERMR3K_MQacbw.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYE98RXi4EwSsbg.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dPIFZifjKcF5UAWdDRYEF8RXi4EwQ.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-weight: 700; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dMIFZifjKcF5UAWdDRaPpZUFuaHi6WZ3S_Yg.woff2) format("woff2"); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Space Mono"; font-style: normal; font-weight: 700; font-display: swap; src: url(https://fonts.gstatic.com/s/spacemono/v17/i7dMIFZifjKcF5UAWdDRaPpZUFWaHi6WZ3Q.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* Paper, ink and type follow Artifactbin's Riso system. */
+html[data-theme=riso] {
+  --manila: #F1DFA6;
+  --pink-soft: #FFD3EA;
+  --paper-sunk: #E8DFC6;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+}
+html[data-theme=riso] body {
+  font: 500 17px/1.55 var(--font-sans);
+  background: var(--grain), var(--paper);
+}
+html[data-theme=riso] :is(button, summary, select, input, img, dialog, .segmented, .settings, .room-label, .reference-card) { border-radius: 0; }
+html[data-theme=riso] :is(button, summary, a, select, input):focus-visible { outline: 3px solid var(--pink); outline-offset: 4px; }
+html[data-theme=riso] .viewer-bar { border-bottom: 2px solid var(--ink); background: var(--grain), var(--sheet); }
+html[data-theme=riso] .compact-brand {
+  position: relative;
+  isolation: isolate;
+  font: 900 31px/.9 var(--font-display);
+  letter-spacing: -.045em;
+  color: var(--ink);
+  text-shadow: none;
+}
+html[data-theme=riso] .compact-brand::before,
+html[data-theme=riso] .compact-brand::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+html[data-theme=riso] .compact-brand::before { color: var(--pink); transform: translate(.045em,.03em); }
+html[data-theme=riso] .compact-brand::after { color: var(--yellow); transform: translate(-.035em,.05em); }
+html[data-theme=riso] :is(.tab-bar > button, .quiet-button, .icon-button, .zoom-controls button, .project-details summary) {
+  border: 2px solid var(--ink);
+  background: var(--sheet);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  font: 400 11px/1.4 var(--font-mono);
+  letter-spacing: .035em;
+  transition: transform .12s, box-shadow .12s, background .12s;
+}
+html[data-theme=riso] :is(.quiet-button, .project-details summary) { padding: 9px 12px; }
+html[data-theme=riso] .tab-bar > button { margin: 10px 0; padding: 0 12px; text-transform: uppercase; }
+html[data-theme=riso] .tab-bar > button[aria-selected=true] { background: var(--yellow); }
+html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary, .tab-bar > button):hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary, .tab-bar > button):active { transform: translate(3px,3px); box-shadow: none; }
+html[data-theme=riso] .quiet-button { background: var(--accent); color: var(--onAccent); text-transform: uppercase; }
+html[data-theme=riso] .project-details[open] summary { background: var(--pink); }
+html[data-theme=riso] :is(.settings, .project-details-body, .floor-plan-preview, dialog) {
+  border: 2px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  background: var(--grain), var(--sheet);
+  backdrop-filter: none;
+}
+html[data-theme=riso] .project-details-body { background-color: var(--manila); }
+html[data-theme=riso] .project-card-title h2 { font: 900 28px/1.1 var(--font-display); letter-spacing: -.02em; }
+html[data-theme=riso] .brand-mark { color: var(--accent); font-weight: 900; }
+html[data-theme=riso] .project-details .metadata { border-top: 1px dashed var(--ink); }
+html[data-theme=riso] .metadata dd { font: 700 28px/1.2 var(--font-mono); }
+html[data-theme=riso] .metadata :is(dt, small) { font: 400 10px/1.4 var(--font-mono); }
+html[data-theme=riso] .resource-section-heading { align-items: center; }
+html[data-theme=riso] .resource-section-heading :is(h1,h2) {
+  font: 900 clamp(32px,4vw,56px)/.95 var(--font-display);
+  letter-spacing: -.035em;
+  color: var(--accent);
+}
+html[data-theme=riso] .resource-section-heading > span {
+  background: var(--manila);
+  border: 1px solid var(--ink);
+  padding: 8px 10px;
+  font: 400 10px/1.4 var(--font-mono);
+  letter-spacing: .06em;
+}
+html[data-theme=riso] .resource-section-heading > span::before { content: '○'; margin-right: 8px; }
+html[data-theme=riso] .floor-plan-preview { padding: 20px; }
+html[data-theme=riso] .floor-plan-preview:hover { border-color: var(--accent); }
+html[data-theme=riso] .floor-plan-preview span { font: 400 11px/1.5 var(--font-mono); }
+html[data-theme=riso] .resource-note { font: 500 14px/1.55 var(--font-sans); }
+html[data-theme=riso] .resource-room { border-top: 2px solid var(--ink); }
+html[data-theme=riso] .resource-room h3 { font: 900 28px/1.1 var(--font-display); letter-spacing: -.02em; }
+html[data-theme=riso] .resource-room-heading p { font: 400 11px/1.5 var(--font-mono); }
+html[data-theme=riso] .resource-photo { padding: 8px 8px 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 4px 4px 0 var(--ink); }
+html[data-theme=riso] .resource-photo:hover { background: var(--pink-soft); }
+html[data-theme=riso] .resource-photo span { color: var(--ink); font: 400 10px/1.5 var(--font-mono); }
+html[data-theme=riso] .sidebar { border-right: 2px solid var(--ink); background: var(--grain), var(--sheet); }
+html[data-theme=riso] .section-title { font: 400 10px/1.5 var(--font-mono); letter-spacing: .09em; }
+html[data-theme=riso] .room-button { gap: 10px; margin: 5px 0; padding: 12px 9px; border: 2px solid transparent; font: 500 15px/1.35 var(--font-sans); }
+html[data-theme=riso] .room-button:hover { background: var(--selected); border-color: var(--ink); }
+html[data-theme=riso] .room-button.active { background: var(--yellow); border-color: var(--ink); box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .room-button .number { color: var(--accent); font: 400 11px/1.4 var(--font-mono); }
+html[data-theme=riso] .room-action { flex-shrink: 0; color: var(--ink); border-bottom: 1px solid var(--ink); font: 400 9px/1.5 var(--font-mono); letter-spacing: .03em; }
+html[data-theme=riso] .all-rooms { font: 400 10px/1.5 var(--font-mono); text-decoration: underline; text-underline-offset: 4px; }
+html[data-theme=riso] .reference-card img { border: 2px solid var(--ink); }
+html[data-theme=riso] .reference-card figcaption { font: 500 13px/1.5 var(--font-sans); }
+html[data-theme=riso] .room-thumbnails button[aria-pressed=true] { border-color: var(--ink); background: var(--yellow); }
+html[data-theme=riso] .segmented { padding: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .segmented button { padding: 9px 12px; font: 400 10px/1.4 var(--font-mono); }
+html[data-theme=riso] .segmented button + button { border-left: 1px solid var(--ink); }
+html[data-theme=riso] .segmented button.active { background: var(--accent); color: var(--onAccent); }
+html[data-theme=riso] .settings { font: 400 10px/1.5 var(--font-mono); }
+html[data-theme=riso] .settings summary { font: 700 11px/1.5 var(--font-mono); border-color: var(--ink); }
+html[data-theme=riso] .settings select { background: var(--sheet); border: 1px solid var(--ink); font: 400 10px/1.5 var(--font-mono); }
+html[data-theme=riso] .settings input { accent-color: var(--accent); }
+html[data-theme=riso] .room-label { border: 1px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); background: var(--sheet); }
+html[data-theme=riso] .room-label.active { background: var(--yellow); color: var(--ink); }
+html[data-theme=riso] .room-label.active small { color: var(--ink); }
+html[data-theme=riso] .selection-info h2 { font: 900 32px/1.1 var(--font-display); }
+html[data-theme=riso] .dialog-header h2 { font: 900 28px/1.1 var(--font-display); }
+html[data-theme=riso] dialog::backdrop { background: #1C2340b3; backdrop-filter: none; }
+@media (max-width:760px) {
+  html[data-theme=riso] .compact-brand { font-size: 26px; }
+  html[data-theme=riso] .tab-bar > button { font-size: 9px; padding: 0 7px; }
+  html[data-theme=riso] .project-details summary { font-size: 8px; padding: 8px 6px; }
+  html[data-theme=riso] .resource-section-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
+  html[data-theme=riso] .resource-section-heading > span { font-size: 9px; padding: 5px 8px; }
+  html[data-theme=riso] .floor-plan-preview { padding: 10px; }
+  html[data-theme=riso] .resource-room h3 { font-size: 24px; }
+  html[data-theme=riso] .quiet-button { font-size: 9px; padding: 8px; }
+  html[data-theme=riso] .sidebar { border-right: 0; border-bottom: 2px solid var(--ink); }
+}
+@media (prefers-reduced-motion:reduce) {
+  html[data-theme=riso] :is(button, summary) { transition: none; }
+}

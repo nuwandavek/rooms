@@ -1,0 +1,19 @@
+{
+  "name": "home3d-kit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "home": "node kit/home",
+    "test": "node --test kit/tests/*.test.mjs"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12",
+    "playwright": "1.64.1"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

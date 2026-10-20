@@ -1,0 +1,41 @@
+#!/usr/bin/env node
+import {spawn} from 'node:child_process';
+import {pathToFileURL} from 'node:url';
+import {newProject,listProjects,buildProject} from './project.mjs';
+
+const help=`Home3D — one kit, many homes
+
+  kit/home new <name>                 Create projects/<name> from the starter
+  kit/home list                       List projects
+  kit/home build <name>               Export standalone projects/<name>/out/index.html
+  kit/home open <name>                Build and open the standalone HTML
+  kit/home serve <name> [--port 4173]  Local server; edit source and refresh to rebuild
+  kit/home check <name>               Validate, build, exercise controls, save screenshots
+
+Run npm ci once. Names use kebab-case. Run these commands from the repo root,
+or use the absolute path to kit/home from anywhere. Ctrl+C stops the server.`;
+
+const [command,name,...args]=process.argv.slice(2);
+try {
+  if(!command||command==='help'||command==='--help')console.log(help);
+  else if(command==='list')console.log((await listProjects()).join('\n') || 'No projects yet.');
+  else if(command==='new')console.log(`Created ${await newProject(name)}\nEdit brief.md, plan.md and home.js, then run kit/home serve ${name}.`);
+  else if(command==='build'||command==='open') {
+    const file=await buildProject(name);console.log(file);
+    if(command==='open') {
+      const url=pathToFileURL(file).href;
+      const executable=process.platform==='darwin'?'open':process.platform==='win32'?'cmd':'xdg-open';
+      const options=process.platform==='win32'?['/c','start','',url]:[url];
+      await new Promise((accept,reject)=>{const child=spawn(executable,options,{stdio:'inherit'});child.on('error',reject);child.on('exit',code=>code===0?accept():reject(new Error(`Browser opener exited ${code}; open ${file} manually.`)));});
+    }
+  } else if(command==='serve') {
+    if(args.length && (args.length!==2||args[0]!=='--port'))throw new Error('Usage: kit/home serve <name> [--port 4173]');
+    const port=args.length?Number(args[1]):4173;
+    if(!Number.isInteger(port)||port<1||port>65535)throw new Error('Port must be 1–65535.');
+    const {serveProject}=await import('./server.mjs');const server=await serveProject(name,port);
+    console.log(`Serving ${name}: http://127.0.0.1:${port}\nEdit source and refresh to rebuild. Ctrl+C to stop.`);
+    for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close(()=>process.exit(0)));
+  } else if(command==='check') {
+    const {checkProject}=await import('./check.mjs');await checkProject(name);
+  } else throw new Error(`Unknown command: ${command}\n${help}`);
+} catch(error) {console.error(error.code==='EEXIST'?`Project already exists: ${name}. Choose another name or edit it in place.`:error.message);process.exitCode=1;}

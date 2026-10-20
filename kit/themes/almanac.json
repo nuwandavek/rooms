@@ -1,0 +1,160 @@
+{
+  "slug": "almanac",
+  "name": "Almanac",
+  "families": {
+    "display": "\"Instrument Serif\", Georgia, serif",
+    "sans": "\"DM Sans\", system-ui, sans-serif",
+    "mono": "\"DM Mono\", ui-monospace, Menlo, monospace"
+  },
+  "tokens": [
+    {
+      "name": "paper",
+      "light": "#F2E7D6",
+      "dark": "#1B241B",
+      "usage": "Page ground: warm, uncoated. In Night the ink becomes the ground.",
+      "group": "Grounds"
+    },
+    {
+      "name": "card",
+      "light": "#F8F1E6",
+      "dark": "#243024",
+      "usage": "Cards, tickets, dialogs: a lighter sheet on the paper.",
+      "group": "Grounds"
+    },
+    {
+      "name": "band",
+      "light": "#E7CFB4",
+      "dark": "#2E3B2E",
+      "usage": "The hero band and arch panels: a deeper warm ground that holds one big thing.",
+      "group": "Grounds"
+    },
+    {
+      "name": "screen",
+      "light": "#C8D1A9",
+      "dark": "#3A4A36",
+      "usage": "The soft green ground inside a device or a figure.",
+      "group": "Grounds"
+    },
+    {
+      "name": "paper-sunk",
+      "light": "#E8DBC6",
+      "dark": "#141B14",
+      "usage": "Wells, code, inactive tracks, stripes.",
+      "group": "Grounds"
+    },
+    {
+      "name": "line",
+      "light": "#CBBFA9",
+      "dark": "#3C4A3C",
+      "usage": "Hairlines at a quarter strength. The only border in the system.",
+      "group": "Grounds"
+    },
+    {
+      "name": "ink",
+      "light": "#374836",
+      "dark": "#F2E7D6",
+      "usage": "Forest green: all text, all rules, the first series.",
+      "group": "Ink"
+    },
+    {
+      "name": "ink-muted",
+      "light": "#6B7A69",
+      "dark": "#A9B5A6",
+      "usage": "Secondary text at 65%: captions, notes, metadata.",
+      "group": "Ink"
+    },
+    {
+      "name": "accent",
+      "light": "#B44E30",
+      "dark": "#E07A58",
+      "usage": "Terracotta: the one word in a headline, the filled button, the progress bar, the second series.",
+      "group": "Brand"
+    },
+    {
+      "name": "on-accent",
+      "light": "#F2E7D6",
+      "dark": "#1B241B",
+      "usage": "Text on terracotta.",
+      "group": "Brand"
+    },
+    {
+      "name": "accent-soft",
+      "light": "#F0D9CD",
+      "dark": "#4A2A1E",
+      "usage": "Ground for accent tags and the selected state.",
+      "group": "Brand"
+    },
+    {
+      "name": "mauve",
+      "light": "#846B94",
+      "dark": "#B7A3C4",
+      "usage": "The third series and nothing else.",
+      "group": "Brand"
+    },
+    {
+      "name": "positive",
+      "light": "#3E6B3C",
+      "dark": "#8FC28C",
+      "usage": "Success text and the kept share, with a word.",
+      "group": "Status"
+    },
+    {
+      "name": "positive-soft",
+      "light": "#DCE6C9",
+      "dark": "#263A26",
+      "usage": "Ground for success callouts and positive tags.",
+      "group": "Status"
+    },
+    {
+      "name": "caution",
+      "light": "#8C6A1E",
+      "dark": "#E0B65A",
+      "usage": "Warnings as text: an ochre on paper.",
+      "group": "Status"
+    },
+    {
+      "name": "caution-soft",
+      "light": "#F3E5BE",
+      "dark": "#3E3218",
+      "usage": "Ground for warning callouts.",
+      "group": "Status"
+    },
+    {
+      "name": "negative",
+      "light": "#B44E30",
+      "dark": "#E07A58",
+      "usage": "Errors share the terracotta; there is no second red.",
+      "group": "Status"
+    },
+    {
+      "name": "negative-soft",
+      "light": "#F0D9CD",
+      "dark": "#4A2A1E",
+      "usage": "Ground for error callouts.",
+      "group": "Status"
+    }
+  ],
+  "principles": [
+    [
+      "One ink writes everything.",
+      "Text, rules, figures, the first series: all forest green. Colour never carries meaning the ink could carry."
+    ],
+    [
+      "One terracotta word.",
+      "The accent lands on the emphasised word in a headline, the filled button, the second series. Twice on a view is once too many."
+    ],
+    [
+      "Hairlines, not boxes.",
+      "Separation is a 1px rule at a quarter strength above a block. Cards are rare and cast a soft terracotta shadow when they exist."
+    ],
+    [
+      "Numbers sit still.",
+      "Outcome numbers are set in the serif at -.07em, one per block, with the sentence under them. They are read, not scanned."
+    ],
+    [
+      "Arches hold the thing.",
+      "A panel with a rounded top holds one object: a device, a figure, a number. Everything else stays on the paper."
+    ]
+  ],
+  "source": "Artifactbin design-systems/specs/almanac.json"
+}

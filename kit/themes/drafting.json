@@ -1,0 +1,168 @@
+{
+  "slug": "drafting",
+  "name": "Drafting",
+  "families": {
+    "display": "\"Archivo\", \"Arial Narrow\", system-ui, sans-serif",
+    "sans": "\"Archivo\", system-ui, sans-serif",
+    "mono": "\"IBM Plex Mono\", ui-monospace, Menlo, monospace",
+    "narrow": "\"Archivo Narrow\", \"Arial Narrow\", sans-serif"
+  },
+  "tokens": [
+    {
+      "name": "vellum",
+      "light": "#eeede6",
+      "dark": "#0f1b2d",
+      "usage": "Page ground: cool drafting vellum by day, Prussian blueprint by night.",
+      "group": "Grounds"
+    },
+    {
+      "name": "vellum-raised",
+      "light": "#f7f6f1",
+      "dark": "#15253d",
+      "usage": "Sheets, panels, fields.",
+      "group": "Grounds"
+    },
+    {
+      "name": "vellum-sunk",
+      "light": "#e3e1d7",
+      "dark": "#0a1322",
+      "usage": "Wells, code, title-block cells.",
+      "group": "Grounds"
+    },
+    {
+      "name": "grid",
+      "light": "#d9d7cc",
+      "dark": "#1f3350",
+      "usage": "24px drafting grid and hairline rules. Page grids use this at half strength; readable blocks have solid vellum backgrounds.",
+      "group": "Grounds"
+    },
+    {
+      "name": "ink",
+      "light": "#16181c",
+      "dark": "#e9eef7",
+      "usage": "Line-work and primary text. 1px for construction, 2px for the object.",
+      "group": "Ink"
+    },
+    {
+      "name": "ink-muted",
+      "light": "#4a4f58",
+      "dark": "#9fb0c8",
+      "usage": "Secondary text, dimension figures, notes.",
+      "group": "Ink"
+    },
+    {
+      "name": "cobalt",
+      "light": "#2a5bd7",
+      "dark": "#8fb4ff",
+      "usage": "Hierarchy and annotation: headline emphasis, sheet numbers, dimensions, links and the primary action.",
+      "group": "Brand"
+    },
+    {
+      "name": "on-cobalt",
+      "light": "#ffffff",
+      "dark": "#0a1322",
+      "usage": "Text on cobalt fills.",
+      "group": "Brand"
+    },
+    {
+      "name": "cobalt-soft",
+      "light": "#dfe7fb",
+      "dark": "#1b2f55",
+      "usage": "Pale blue evidence panels, title blocks and selected regions of a drawing.",
+      "group": "Brand"
+    },
+    {
+      "name": "vermilion",
+      "light": "#ff781f",
+      "dark": "#ff9747",
+      "usage": "Fluorescent safety orange for revision fills, outlines and changed parts; use on-vermilion for text on the fill.",
+      "group": "Brand"
+    },
+    {
+      "name": "on-vermilion",
+      "light": "#16181c",
+      "dark": "#16181c",
+      "usage": "Text on vermilion fills.",
+      "group": "Brand"
+    },
+    {
+      "name": "vermilion-ink",
+      "light": "#963b00",
+      "dark": "#ffaf6b",
+      "usage": "Readable orange ink for revision text on vellum and pale orange.",
+      "group": "Brand"
+    },
+    {
+      "name": "vermilion-soft",
+      "light": "#ffd4b5",
+      "dark": "#3b2413",
+      "usage": "Warm orange ground for revision notes and changed regions.",
+      "group": "Brand"
+    },
+    {
+      "name": "positive",
+      "light": "#1f7a4d",
+      "dark": "#6fd49a",
+      "usage": "Verified, passed, released. Always with a word.",
+      "group": "Status"
+    },
+    {
+      "name": "positive-soft",
+      "light": "#dcefe3",
+      "dark": "#113426",
+      "usage": "Ground for verified rows.",
+      "group": "Status"
+    },
+    {
+      "name": "caution",
+      "light": "#685500",
+      "dark": "#ffe83d",
+      "usage": "Assumed, pending review.",
+      "group": "Status"
+    },
+    {
+      "name": "caution-soft",
+      "light": "#ffe83d",
+      "dark": "#343b0f",
+      "usage": "Warm fluorescent yellow for small assumption tags and short highlighted phrases; never a paragraph or full-width panel.",
+      "group": "Status"
+    },
+    {
+      "name": "negative",
+      "light": "#c2320a",
+      "dark": "#ff7a4d",
+      "usage": "Failed or blocked. Always pair with a word.",
+      "group": "Status"
+    },
+    {
+      "name": "negative-soft",
+      "light": "#ffe0d6",
+      "dark": "#3b1a10",
+      "usage": "Ground for failures.",
+      "group": "Status"
+    }
+  ],
+  "principles": [
+    [
+      "The object is drawn, not pictured.",
+      "Line-work in ink at 2px for the object and 1px for construction. Photographs are for marketing; a drawing is for understanding."
+    ],
+    [
+      "Every number has a leader.",
+      "Figures attach to the thing they measure with a dimension line and arrowheads. A figure floating in a card is a rumour."
+    ],
+    [
+      "Cobalt leads; orange revises; yellow questions.",
+      "Use cobalt for headline emphasis, sheet labels and evidence. Orange marks a revision; small warm-yellow accents flag assumptions. Keep prose in ink on plain vellum."
+    ],
+    [
+      "The grid shows around the reading.",
+      "Keep the 24px page grid at half strength. Put readable blocks on solid vellum with generous inset padding; the grid remains visible in gutters and between sheets. Use d-reading for prose."
+    ],
+    [
+      "Sheets, not sections.",
+      "Each major part of the page is a sheet with its own title block: number, title, revision, scale. Reading the title blocks reads the plan."
+    ]
+  ],
+  "source": "Artifactbin design-systems/specs/drafting.json"
+}

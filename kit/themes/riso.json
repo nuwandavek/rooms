@@ -1,0 +1,313 @@
+{
+  "slug": "riso",
+  "name": "Riso",
+  "families": {
+    "display": "\"Fraunces\", Georgia, serif",
+    "sans": "\"Fraunces\", Georgia, serif",
+    "mono": "\"Space Mono\", ui-monospace, Menlo, monospace"
+  },
+  "tokens": [
+    {
+      "name": "paper",
+      "light": "#F3ECDC",
+      "dark": "#1C2340",
+      "usage": "Page ground: uncoated stock. In Night the key plate becomes the page.",
+      "group": "Grounds"
+    },
+    {
+      "name": "sheet",
+      "light": "#FBF6EA",
+      "dark": "#263054",
+      "usage": "Cards, step cards, proofs: a whiter sheet laid on the paper.",
+      "group": "Grounds"
+    },
+    {
+      "name": "paper-sunk",
+      "light": "#E8DFC6",
+      "dark": "#151b33",
+      "usage": "Wells, code, inactive tracks, table stripes.",
+      "group": "Grounds"
+    },
+    {
+      "name": "manila",
+      "light": "#F1DFA6",
+      "dark": "#F1DFA6",
+      "usage": "Luggage tags and folio stock: physical card, the same in both modes. Text on it is on-yellow.",
+      "group": "Grounds"
+    },
+    {
+      "name": "line",
+      "light": "#CFC5AD",
+      "dark": "#3A4470",
+      "usage": "Hairlines and quiet borders. The 2px key edge is the real border.",
+      "group": "Grounds"
+    },
+    {
+      "name": "key",
+      "light": "#1C2340",
+      "dark": "#F3ECDC",
+      "usage": "The key plate: text, edges, hard shadows. Every other ink sits on top of it.",
+      "group": "Ink"
+    },
+    {
+      "name": "key-2",
+      "light": "#3A3F5C",
+      "dark": "#B9BED6",
+      "usage": "Secondary text, imprints, captions.",
+      "group": "Ink"
+    },
+    {
+      "name": "blue",
+      "light": "#0078BF",
+      "dark": "#2E9BE8",
+      "usage": "Ink 1. Primary actions, the first series, the headline colour.",
+      "group": "Inks"
+    },
+    {
+      "name": "on-blue",
+      "light": "#FBF6EA",
+      "dark": "#1C2340",
+      "usage": "Text on blue.",
+      "group": "Inks"
+    },
+    {
+      "name": "blue-soft",
+      "light": "#CFE6F5",
+      "dark": "#173555",
+      "usage": "Ground for blue tags and selected rows.",
+      "group": "Inks"
+    },
+    {
+      "name": "pink",
+      "light": "#FF48B0",
+      "dark": "#FF48B0",
+      "usage": "Ink 2. Fluorescent; the second series, the slipped plate behind a headline, badges.",
+      "group": "Inks"
+    },
+    {
+      "name": "on-pink",
+      "light": "#1C2340",
+      "dark": "#1C2340",
+      "usage": "Text on pink.",
+      "group": "Inks"
+    },
+    {
+      "name": "pink-soft",
+      "light": "#FFD3EA",
+      "dark": "#4A1E3A",
+      "usage": "Ground for pink tags and info callouts.",
+      "group": "Inks"
+    },
+    {
+      "name": "yellow",
+      "light": "#FFE800",
+      "dark": "#FFE800",
+      "usage": "Ink 3. Highlighter and ticker ground; never text, never a line.",
+      "group": "Inks"
+    },
+    {
+      "name": "on-yellow",
+      "light": "#1C2340",
+      "dark": "#1C2340",
+      "usage": "Text on yellow.",
+      "group": "Inks"
+    },
+    {
+      "name": "positive",
+      "light": "#00875A",
+      "dark": "#2FD27E",
+      "usage": "Success text and the kept share, always with a word or a pip.",
+      "group": "Status"
+    },
+    {
+      "name": "positive-soft",
+      "light": "#CDEEDD",
+      "dark": "#0F3A26",
+      "usage": "Ground for success callouts and positive tags.",
+      "group": "Status"
+    },
+    {
+      "name": "caution",
+      "light": "#8A6D00",
+      "dark": "#FFE800",
+      "usage": "Warnings as text: a dark ochre on paper, the yellow itself at night.",
+      "group": "Status"
+    },
+    {
+      "name": "caution-soft",
+      "light": "#FFF3A0",
+      "dark": "#3A3400",
+      "usage": "Ground for warning callouts.",
+      "group": "Status"
+    },
+    {
+      "name": "negative",
+      "light": "#E8322B",
+      "dark": "#FF6B61",
+      "usage": "Errors and the lost share. A printer’s red, not pink.",
+      "group": "Status"
+    },
+    {
+      "name": "negative-soft",
+      "light": "#FFD6D3",
+      "dark": "#4A1512",
+      "usage": "Ground for error callouts.",
+      "group": "Status"
+    }
+  ],
+  "principles": [
+    [
+      "Three inks, one key.",
+      "Blue, pink and yellow over navy. There is no fourth ink; a new colour is a new plate, and you do not have one."
+    ],
+    [
+      "Overprint, never blend.",
+      "Inks multiply where they cross. Gradients and blur do not exist in a riso; the halftone dot does."
+    ],
+    [
+      "Misregister on purpose.",
+      "A headline is printed three times, each pass off by a hair. The slip is the signature; keep it under .05em."
+    ],
+    [
+      "Pages, not panels.",
+      "Chapters open full-bleed in one ink with the number enormous. Cards are sheets with a hard shadow, slightly turned."
+    ],
+    [
+      "Tags hang off things.",
+      "Facts live on luggage tags and folios: mono caps, a punched hole, a string. The reader picks them up."
+    ]
+  ],
+  "source": "Artifactbin design-systems/specs/riso.json",
+  "fonts": [
+    [
+      "Fraunces",
+      "ital,opsz,wght,SOFT,WONK@0,9..144,500,100,1;0,9..144,900,100,1;1,9..144,500,100,1"
+    ],
+    [
+      "Space Mono",
+      "ital,wght@0,400;0,700;1,400"
+    ]
+  ],
+  "type_roles": [
+    {
+      "name": "display-xl",
+      "family": "display",
+      "size": "clamp(64px, 12vw, 160px)",
+      "lh": ".82",
+      "weight": 900,
+      "ls": "-0.045em",
+      "sample": "Second life",
+      "usage": "One per page. The chapter word, the cover word. Soft, wonky, enormous."
+    },
+    {
+      "name": "display-l",
+      "family": "display",
+      "size": "clamp(40px, 6.4vw, 84px)",
+      "lh": ".9",
+      "weight": 900,
+      "ls": "-0.03em",
+      "sample": "Three doors.",
+      "usage": "Section openers and plate titles."
+    },
+    {
+      "name": "display-m",
+      "family": "display",
+      "size": "40px",
+      "lh": "40px",
+      "weight": 900,
+      "ls": "-0.02em",
+      "sample": "Batch 07",
+      "usage": "Tag titles, stat blocks, page titles."
+    },
+    {
+      "name": "title",
+      "family": "display",
+      "size": "24px",
+      "lh": "28px",
+      "weight": 900,
+      "ls": "-0.01em",
+      "sample": "A crate on a Tuesday",
+      "usage": "Card and step titles."
+    },
+    {
+      "name": "deck",
+      "family": "display",
+      "size": "clamp(20px, 2vw, 26px)",
+      "lh": "1.25",
+      "weight": 500,
+      "fs": "italic",
+      "sample": "In which a hundred things are laid out on one long bench.",
+      "usage": "The italic line under a headline, chapter subtitles, pull quotes."
+    },
+    {
+      "name": "body-l",
+      "family": "sans",
+      "size": "20px",
+      "lh": "1.5",
+      "weight": 500,
+      "sample": "Every one will leave by one of three doors.",
+      "usage": "Step cards and lead paragraphs. Fraunces at 500 reads at length."
+    },
+    {
+      "name": "body",
+      "family": "sans",
+      "size": "17px",
+      "lh": "1.55",
+      "weight": 500,
+      "sample": "Each one gets a paper tag, a number, and a few minutes of attention.",
+      "usage": "Default reading and UI text."
+    },
+    {
+      "name": "body-s",
+      "family": "sans",
+      "size": "14px",
+      "lh": "1.45",
+      "weight": 500,
+      "sample": "Figures illustrative · fictional batch",
+      "usage": "Captions, imprints, helper text."
+    },
+    {
+      "name": "label",
+      "family": "mono",
+      "size": "12px",
+      "lh": "16px",
+      "weight": 400,
+      "ls": "0.09em",
+      "tt": "uppercase",
+      "sample": "Chapter I · p. 3",
+      "usage": "Eyebrows, folios, tag facts, running heads. Caps from CSS."
+    },
+    {
+      "name": "numeral",
+      "family": "mono",
+      "size": "40px",
+      "lh": "44px",
+      "weight": 700,
+      "ls": "-0.02em",
+      "sample": "640",
+      "usage": "KPI figures and the numbers inside doors. Tabular.",
+      "extra": "font-variant-numeric: tabular-nums"
+    },
+    {
+      "name": "mono",
+      "family": "mono",
+      "size": "13px",
+      "lh": "20px",
+      "weight": 400,
+      "sample": "batch=07 door=parts n=25",
+      "usage": "Code, IDs, table figures."
+    }
+  ],
+  "extra_vars": {
+    "shadow-hard": {
+      "light": "6px 6px 0 0 #1C2340",
+      "dark": "6px 6px 0 0 #FF48B0"
+    },
+    "shadow-hard-lg": {
+      "light": "9px 9px 0 0 #1C2340",
+      "dark": "9px 9px 0 0 #FF48B0"
+    },
+    "chip-radius": "0",
+    "grain": "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E\")"
+  }
+}
