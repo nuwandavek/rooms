@@ -76,6 +76,7 @@ export function createShell(model, palette) {
           if (type==='door') {
             const leaf = new THREE.Group();
             leaf.position.set(start+.02,bottom,0); leaf.rotation.y=-Math.PI*.4;
+            leaf.userData.doorLeaf=true;  // The viewer's "Doors closed" setting swings it shut.
             detail.add(leaf);
             box(width-.05,h,.035,(width-.05)/2,h/2,0,materials.door,leaf);
           } else {

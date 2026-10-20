@@ -63,10 +63,16 @@ to `kit/home` from any directory, or use `npm run home -- <command> <name>`.
 
 ## Viewer tabs
 
+Tabs are numbered by authoring stage: **1 Resources**, **2 Assets**, **3 Shell**,
+**4 Fit-out**, **5 Furnished**.
+
 **Resources** opens first: the floor plan, room photo galleries, and other source
 images. Click any image to enlarge it, or use **View in 3D** to focus its room.
-**Home3D** keeps the room list, selected-room photos and thumbnails beside the
-model, with **3D** and **Walk** modes at top left and **↺ Reset** / **Top-down** cameras at
+**Assets** lists the inventory. **Shell**, **Fit-out** and **Furnished** share one 3D
+viewer and add layers left to right: walls, rooms and openings; then built-ins and
+finishes (inventory rows of kind `fixture` for now; floors, skirting, counters and
+textures later); then loose furniture, lighting and decor. The viewer keeps the room
+list, selected-room photos and thumbnails beside the model, with **3D** and **Walk** modes at top left and **↺ Reset** / **Top-down** cameras at
 top right. View settings includes zoom −/+, wall cutaway, layers and lighting.
 The project name, location, bedrooms and floor area live in the collapsible
 **Project details** card at the top right.
@@ -78,7 +84,8 @@ controls. Walls, windows, railings, voids and slab edges block movement; doorway
 and open sliding doors are passable. Room buttons jump to that room. Walk uses
 full-height walls; switching back to 3D restores the cutaway setting.
 
-To open directly in 3D, visit `http://127.0.0.1:4173/?tab=home3d`.
+To open a stage directly, visit `http://127.0.0.1:4173/?tab=shell` (or `fitout`,
+`furnished`; `?tab=home3d` opens the last 3D stage).
 
 ## Assets tab and model library
 

@@ -84,7 +84,7 @@ zero-area polygons; it does not detect every self-intersection, overlap or traci
 Room records: `{id,name,center,polygon,featured?,dimension?,photo?,photos?,surface?}`.
 `photos` is an array of project-relative image paths. The optional `photo` is the
 cover image; the viewer deduplicates it against `photos`. Resources shows the
-complete gallery; selecting a room in Home3D shows its gallery and thumbnails.
+complete gallery; selecting a room in the 3D tabs shows its gallery and thumbnails.
 `id` is unique kebab-case. `center` locates the label and camera focus.
 `featured: true` shows the room in navigation; all rooms have clickable floors.
 `surface` is `floor`, `wet`, or `balcony`. `dimension` is a display label copied

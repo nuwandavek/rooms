@@ -31,9 +31,11 @@ was loaded through a discovery symlink.
 | `library/` | Shared `.glb` models by id, with provenance in `library/README.md` |
 | `kit/` | Reusable geometry, viewer, themes, commands, starter |
 
-The viewer opens on **Resources** (floor plan, room galleries, extra photo groups).
-**Home3D** contains room focus, room photographs, and camera/layer/light controls.
-Use `?tab=home3d` to open directly in 3D. Keep metadata in the collapsible Project details card;
+Tabs follow the stages: **1 Resources** (floor plan, room galleries, extra photo
+groups), **2 Assets** (inventory), then one shared 3D viewer as **3 Shell**,
+**4 Fit-out** (plus built-ins and finishes; `fixture` rows for now) and **5 Furnished**
+(plus loose items), with room focus, room photographs, and camera/layer/light controls.
+Use `?tab=shell`, `fitout` or `furnished` to open a stage directly. Keep metadata in the collapsible Project details card;
 do not add promotional intro copy or a plan-orientation indicator.
 
 A home supplies data to `mount(home)`. Shared viewer code must not contain a

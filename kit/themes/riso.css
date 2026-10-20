@@ -62,6 +62,8 @@ html[data-theme=riso] .viewer-bar .tab-bar { border-radius: 0; border: 2px solid
 html[data-theme=riso] .tab-bar > button { padding: 9px 16px; color: var(--ink); font: 400 11px/1.4 var(--font-mono); letter-spacing: .035em; text-transform: uppercase; transition: background .12s; }
 html[data-theme=riso] .tab-bar > button + button { border-left: 2px solid var(--ink); }
 html[data-theme=riso] .tab-bar > button:hover { background: var(--manila); }
+html[data-theme=riso] .tab-step { opacity: .55; margin-right: 7px; }
+html[data-theme=riso] .tab-bar > button[aria-selected=true] .tab-step { opacity: 1; }
 html[data-theme=riso] .viewer-bar .tab-bar > button[aria-selected=true] { background: var(--yellow); color: var(--ink); }
 html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary):hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
 html[data-theme=riso] :is(.quiet-button, .icon-button, .zoom-controls button, .project-details summary):active { transform: translate(3px,3px); box-shadow: none; }

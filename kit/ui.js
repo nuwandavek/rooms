@@ -30,9 +30,11 @@ export function markup(home) {
   return `<div class="viewer-bar">
     <a class="brand compact-brand" data-text="rooms." href="#" aria-label="rooms. home resources">rooms.</a>
     <div class="tab-bar" role="tablist" aria-label="Project views">
-      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources">Resources</button>
-      <button id="tab-home3d" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1">Home3D</button>
-      <button id="tab-assets" role="tab" aria-selected="false" aria-controls="panel-assets" tabindex="-1">Assets</button>
+      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources"><span class="tab-step">1.</span>Resources</button>
+      <button id="tab-assets" role="tab" aria-selected="false" aria-controls="panel-assets" tabindex="-1"><span class="tab-step">2.</span>Assets</button>
+      <button id="tab-shell" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Walls, rooms and openings"><span class="tab-step">3.</span>Shell</button>
+      <button id="tab-fitout" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
+      <button id="tab-furnished" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
     </div>
     <details class="project-details"><summary>Project details <span>＋</span></summary><div class="project-details-body">
       <div class="project-card-title"><span class="brand-mark">${escape(home.mark || 'h.')}</span><h2>${escape(home.brand || home.title)}</h2></div>
@@ -52,7 +54,7 @@ export function markup(home) {
       ${inventory.length?`<p class="resource-note">${inventory.length} assets across ${assetRooms.length} rooms · ${modelled} with a library model · ${(home.placements || []).length} placed in the 3D home.</p>${assetTable}`:'<p class="empty-resource">No inventory.md yet.</p>'}
     </section>
   </section>
-  <main id="panel-home3d" role="tabpanel" aria-labelledby="tab-home3d" hidden>
+  <main id="panel-home3d" role="tabpanel" aria-labelledby="tab-furnished" hidden>
     <aside class="sidebar">
       <div class="section-title">Explore the rooms <span>${String(home.model.rooms.filter(r=>r.featured).length).padStart(2,'0')}</span></div>
       <nav id="room-list" aria-label="Select a room"></nav>
@@ -71,12 +73,13 @@ export function markup(home) {
         <button id="mouse-look" class="quiet-button" hidden>Mouse look ↗</button>
         <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-output" aria-label="Zoom level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button></div>
         <label class="switch-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
-        <label class="switch-row">Furniture<input id="furniture-toggle" type="checkbox" checked></label>
         <label class="switch-row">Doors & glazing<input id="openings-toggle" type="checkbox" checked></label>
+        <label class="switch-row">Doors closed<input id="doors-closed" type="checkbox"></label>
         <div class="wall-label"><label for="wall-height">Wall cutaway</label><output id="height-output"></output></div>
         <input id="wall-height" aria-label="Visible wall height" type="range" min="0.15" max="${home.model.wallHeight}" step="0.05" value="${home.model.cutaway}">
         <div class="range-labels"><span>LOW</span><button id="full-height">Full height ↗</button></div>
         <label class="lighting-label" for="lighting">Light study</label><select id="lighting"><option value="daylight">Soft daylight</option><option value="afternoon">Late afternoon</option></select>
+        <button id="reset-settings" class="quiet-button">↺ Reset settings</button>
         <small class="lighting-note">Illustrative lighting</small>
       </details>
       <div class="selection-info" id="selection-info" aria-live="polite"></div>
@@ -89,18 +92,24 @@ export function markup(home) {
 }
 
 // Resources and dialogs work even when WebGL is unavailable.
-export function setupUI(home,target,onRoom) {
+// Tabs follow the authoring stages. Shell, Fit-out and Furnished share the 3D panel and
+// add layers left to right; `onStage` tells the viewer which one is showing.
+export const STAGES=['shell','fitout','furnished'];
+export function setupUI(home,target,onRoom,onStage=()=>{}) {
   const get=id=>target.querySelector(`#${id}`);
-  let tab='resources';
-  const tabs=['resources','home3d','assets'];
+  let tab='resources',stage='furnished';
+  const tabs=['resources','assets',...STAGES];
+  const panel=key=>STAGES.includes(key)?'home3d':key;
   let previewsStarted=false;
   function setTab(name,updateURL=true) {
+    if(name==='home3d')name=stage;  // Older links and the room buttons open the last 3D stage.
     tab=tabs.includes(name)?name:'resources';
+    for(const key of ['resources','assets','home3d'])get(`panel-${key}`).hidden=key!==panel(tab);
     for(const key of tabs) {
-      get(`panel-${key}`).hidden=key!==tab;
       get(`tab-${key}`).setAttribute('aria-selected',String(key===tab));
       get(`tab-${key}`).tabIndex=key===tab?0:-1;
     }
+    if(STAGES.includes(tab)){stage=tab;get('panel-home3d').setAttribute('aria-labelledby',`tab-${tab}`);onStage(stage);}
     if(tab==='assets'&&!previewsStarted){previewsStarted=true;renderPreviews();}
     if(updateURL) {
       const url=new URL(location.href);url.searchParams.set('tab',tab);
@@ -146,7 +155,7 @@ export function setupUI(home,target,onRoom) {
         .then(({src})=>cell.innerHTML=`<img src="${src}" alt="">`);
     });
   }
-  target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get('tab-home3d').focus();});
+  target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get(`tab-${tab}`).focus();});
   setTab(new URLSearchParams(location.search).get('tab'),false);
-  return {setTab,showPhoto,get tab(){return tab;}};
+  return {setTab,showPhoto,get tab(){return tab;},get in3d(){return STAGES.includes(tab);},get stage(){return stage;}};
 }

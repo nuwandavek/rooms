@@ -675,6 +675,12 @@ html[data-theme=drafting] .reference-card img {
   color: var(--ink);
   border-bottom-color: var(--accent);
 }
+.tab-step {
+  margin-right: 7px;
+  opacity: .5;
+  font-variant-numeric: tabular-nums;
+}
+.tab-bar > button[aria-selected=true] .tab-step { opacity: 1; }
 .tab-caption {
   align-self: center;
   margin-left: auto;

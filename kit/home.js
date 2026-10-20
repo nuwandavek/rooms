@@ -14,7 +14,9 @@ export function mount(home, target=document.body) {
   target.innerHTML = markup(home);
   const get=id=>target.querySelector(`#${id}`);
   let focusRoom=()=>{};
-  const ui=setupUI(home,target,id=>focusRoom(id));
+  // A 3D tab in the URL selects its stage before the furniture group exists.
+  let furnitureBuilt=false;
+  const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&updateFurniture());
   const settings=target.querySelector('.settings');
   if(matchMedia('(max-width:760px)').matches) settings.open=false;
 
@@ -123,9 +125,13 @@ export function mount(home, target=document.body) {
   function updateHeight() {
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     shell.setWallHeight(height,mode==='walk');get('height-output').value=`${height.toFixed(2)} m`;
-    // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
-    furniture.children.forEach(o=>o.visible=(o.userData.placement.y || 0)<height);
+    updateFurniture();updateDoors();
     get('wall-height').disabled=mode==='walk';
+  }
+  // Walls (and their door leaves) are rebuilt on every height change.
+  function updateDoors() {
+    const closed=get('doors-closed').checked;
+    shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});
   }
   function setMode(value) {
     if(!['orbit','walk'].includes(value))return;
@@ -164,6 +170,15 @@ export function mount(home, target=document.body) {
   get('zoom-in').onclick=()=>zoomBy(1.25);get('zoom-out').onclick=()=>zoomBy(1/1.25);
   get('labels-toggle').onchange=e=>get('labels').hidden=!e.target.checked;
   get('openings-toggle').onchange=e=>shell.openings.visible=e.target.checked;
+  // Door leaves are drawn open; closing them is visual only (Walk still passes through).
+  get('doors-closed').onchange=()=>updateDoors();
+  get('reset-settings').onclick=()=>{
+    for(const [id,checked] of [['labels-toggle',true],['openings-toggle',true],['doors-closed',false]]) {
+      get(id).checked=checked;get(id).dispatchEvent(new Event('change'));
+    }
+    get('wall-height').value=model.cutaway;updateHeight();
+    get('lighting').value=home.lighting || 'daylight';get('lighting').dispatchEvent(new Event('change'));
+  };
   // Placed items: library models (each file loads once, cloned per placement, fitted to
   // the inventory row's Dims and tinted toward its Colour) or primitives built from Dims.
   const furniture=new THREE.Group();furniture.name='Furniture';scene.add(furniture);
@@ -179,10 +194,20 @@ export function mount(home, target=document.body) {
     object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
     object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
     object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
-    object.userData.placement=placement;furniture.add(object);
-    object.visible=(placement.y || 0)<(mode==='walk'?model.wallHeight:Number(get('wall-height').value));
+    object.userData.placement=placement;furniture.add(object);updateFurniture();
   })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
-  get('furniture-toggle').onchange=e=>furniture.visible=e.target.checked;
+  furnitureBuilt=true;
+  // Shell shows no items, Fit-out adds built-in fixtures, Furnished adds everything.
+  // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
+  function updateFurniture() {
+    const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
+    for(const object of furniture.children) {
+      const placement=object.userData.placement;
+      const kind=(home.inventory || []).find(a=>a.name===placement.asset&&a.room===placement.room)?.kind;
+      const staged=ui.stage==='furnished'||(ui.stage==='fitout'&&kind==='fixture');
+      object.visible=staged&&(placement.y || 0)<height;
+    }
+  }
   get('wall-height').oninput=updateHeight;
   get('full-height').onclick=()=>{get('wall-height').value=model.wallHeight;setMode('orbit');};
   get('lighting').onchange=e=>setLighting(e.target.value);
@@ -209,8 +234,8 @@ export function mount(home, target=document.body) {
   function render(now) {
     frame=requestAnimationFrame(render);
     const dt=(now-previousTime)/1000;previousTime=now;
-    walk.setActive(mode==='walk'&&ui.tab==='home3d'&&!target.querySelector('dialog[open]')&&!document.hidden);
-    if(ui.tab!=='home3d')return;
+    walk.setActive(mode==='walk'&&ui.in3d&&!target.querySelector('dialog[open]')&&!document.hidden);
+    if(!ui.in3d)return;
     if(mode==='walk'){walk.update(dt);renderer.render(scene,walk.camera);return;}
     if(transition) {
       const t=Math.min((now-transition.start)/(matchMedia('(prefers-reduced-motion: reduce)').matches?1:650),1),ease=1-(1-t)**3;

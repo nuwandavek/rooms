@@ -52,9 +52,19 @@ export async function checkProject(name) {
       await firstPhoto.click();assert.equal(await page.locator('#photo-dialog').evaluate(d=>d.open),true);
       await page.keyboard.press('Escape');
     }
-    await page.locator('#tab-home3d').click();
+    await page.locator('#tab-furnished').click();
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     await page.screenshot({path:resolve(out,'check-3d.png')});
+    // Stages share the viewer: Shell hides every item, Fit-out shows fixtures only.
+    const shown=()=>page.evaluate(()=>window.home3d.furniture.children.filter(o=>o.visible).map(o=>o.userData.placement));
+    const kindOf=p=>(home.inventory || []).find(a=>a.name===p.asset&&a.room===p.room)?.kind;
+    await page.locator('#tab-shell').click();
+    assert.equal(await page.locator('#panel-home3d').isVisible(),true);
+    assert.equal((await shown()).length,0,'Shell shows no items');
+    await page.locator('#tab-fitout').click();
+    assert.ok((await shown()).every(p=>kindOf(p)==='fixture'),'Fit-out shows only fixtures');
+    await page.locator('#tab-furnished').click();
+    if((home.placements || []).some(p=>!p.y))assert.ok((await shown()).length>0,'Furnished shows items');
     const initialZoom=await page.evaluate(()=>window.home3d.camera.zoom);
     await page.locator('#zoom-in').click();
     assert.ok(await page.evaluate(()=>window.home3d.camera.zoom)>initialZoom);
@@ -109,8 +119,8 @@ export async function checkProject(name) {
     await focus.click();
     assert.equal(await page.locator('#panel-home3d').isVisible(),true);
     assert.equal(await page.locator('#selection-info strong').textContent(),home.model.rooms[0].name);
-    await page.locator('#tab-home3d').focus();await page.keyboard.press('ArrowLeft');
-    assert.equal(await page.locator('#panel-resources').isVisible(),true);
+    await page.locator('#tab-shell').focus();await page.keyboard.press('ArrowLeft');
+    assert.equal(await page.locator('#panel-assets').isVisible(),true);
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.locator('#panel-home3d').isVisible(),true);
     await page.locator('#tab-assets').click();
@@ -119,7 +129,7 @@ export async function checkProject(name) {
     await page.waitForFunction(()=>!document.querySelector('[data-model] span, [data-primitive] span'),{},{timeout:15000});
     assert.equal(await page.locator('[data-model] img, [data-primitive] img').count(),(home.inventory || []).filter(a=>a.model).length,'Every library model and primitive renders a preview');
     await page.screenshot({path:resolve(out,'check-assets.png')});
-    await page.locator('#tab-home3d').click();
+    await page.locator('#tab-furnished').click();
     await page.setViewportSize({width:390,height:844});
     await page.reload();
     await page.waitForFunction(()=>document.body.dataset.modelReady==='true');
