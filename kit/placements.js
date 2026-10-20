@@ -33,6 +33,7 @@ export function applyPlacements(home,json) {
     if(p?.rotation!==undefined&&!Number.isFinite(p.rotation))errors.push(`${label}: rotation must be degrees`);
     if(p?.y!==undefined&&!(Number.isFinite(p.y)&&p.y>=0))errors.push(`${label}: y must be a height in metres`);
     if(p?.asset!==undefined&&!row)errors.push(`${label}: no inventory row "${p.asset}" in ${p.room}`);
+    if(model==='@fitout')errors.push(`${label}: "${p.asset}" is built by fitout.json; do not place it`);
     return {model,room:p?.room,at:p?.at,rotation:p?.rotation ?? 0,y:p?.y ?? 0,
       ...(p?.asset?{asset:p.asset}:{}),...(row?.dims?{dims:row.dims}:{}),...(row?.colour?{colour:row.colour}:{})};
   });

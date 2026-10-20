@@ -173,7 +173,8 @@ export function createShell(model, palette) {
   let selectedId=null;
   function select(id) {
     selectedId=id;
-    for(const floor of floors) floor.material=floor.userData.room.id===id?materials.selected:floor.userData.originalMaterial;
+    // The yellow selected floor is a Shell aid; with finishes on it would hide the real floor.
+    for(const floor of floors) floor.material=floor.userData.room.id===id&&!finishes?materials.selected:floor.userData.originalMaterial;
   }
   return {root,floors,openings,setWallHeight,setFinishes,
     select,

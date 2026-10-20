@@ -20,10 +20,11 @@ export function markup(home) {
     <table class="asset-table"><thead><tr><th>Model</th><th>Asset</th><th>Kind</th><th>Qty</th><th>Placed</th><th>Seen in</th><th>Notes</th></tr></thead><tbody>
     ${items.map(({asset,i})=>`<tr>
       <td>${asset.modelUrl?`<div class="asset-preview" data-model="${escape(asset.modelUrl)}"><span>Rendering…</span></div>`
+        :asset.model==='@fitout'?'<div class="asset-preview empty"><span>In fit-out</span></div>'
         :asset.model?.startsWith('@')?`<div class="asset-preview" data-primitive="${i}"><span>Rendering…</span></div>`
         :'<div class="asset-preview empty"><span>No model yet</span></div>'}</td>
       <td><strong>${escape(asset.name)}</strong>${asset.model?`<small>${escape(asset.model)}${asset.dims?` · fitted to ${asset.dims.map(v=>v.toFixed(2)).join(' × ')} m`:`<span class="asset-size" data-size-for="${escape(asset.modelUrl || '')}"></span>`}</small>`:''}</td>
-      <td><span class="asset-kind">${escape(asset.kind)}</span></td><td>${asset.qty}</td><td>${placedCount(asset)?`<span class="asset-placed${placedCount(asset)>=asset.qty?' done':''}">${placedCount(asset)} / ${asset.qty}</span>`:'<span class="asset-placed">—</span>'}</td>
+      <td><span class="asset-kind">${escape(asset.kind)}</span></td><td>${asset.qty}</td><td>${asset.model==='@fitout'?'<span class="asset-placed done">fit-out</span>':placedCount(asset)?`<span class="asset-placed${placedCount(asset)>=asset.qty?' done':''}">${placedCount(asset)} / ${asset.qty}</span>`:'<span class="asset-placed">—</span>'}</td>
       <td><div class="asset-photos">${asset.photos.map((src,j)=>`<button data-asset="${i}" data-asset-photo="${j}" aria-label="${escape(asset.name)} photo ${j+1}"><img src="${escape(src)}" alt="" loading="lazy"></button>`).join('')}</div></td>
       <td class="asset-notes">${escape(asset.notes)}</td></tr>`).join('')}
     </tbody></table></article>`).join('');

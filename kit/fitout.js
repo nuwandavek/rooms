@@ -17,7 +17,8 @@
 //
 // A counter's `path` is its back edge in plan metres, usually along wall faces; the
 // counter extends `depth` to the right of the direction of travel (`"side": "left"` flips
-// it). `sink.at` is metres along the path to the sink's center.
+// it). `sink.at` is metres along the path to the sink's center. `thickness` sets the slab
+// (default 0.04); leave out `base` and `plinth` for a floating slab such as a vanity.
 export const MATERIAL_KINDS={paint:['colour'],tiles:['size','colour'],marble:['size','colour','veinColour'],
   speckle:['colour','flecks'],wood:['colour','grain'],stripes:['colours','width']};
 
@@ -52,6 +53,7 @@ export function applyFitout(home,json,materials) {
     const point=p=>Array.isArray(p)&&p.length===2&&p.every(Number.isFinite);
     if(!Array.isArray(b.path)||b.path.length<2||!b.path.every(point))errors.push(`fitout.json ${where}: path needs two or more [x,z] points`);
     for(const key of ['depth','height'])if(!(b[key]>0))errors.push(`fitout.json ${where}: ${key} must be metres`);
+    if(b.thickness!==undefined&&!(b.thickness>0&&b.thickness<b.height))errors.push(`fitout.json ${where}: thickness must be metres, below height`);
     for(const key of ['top','base','plinth'])if(b[key])material(b[key],`${where}.${key}`);
     if(b.uppers){material(b.uppers.material,`${where}.uppers`);if(!(b.uppers.top>b.uppers.bottom&&b.uppers.depth>0))errors.push(`fitout.json ${where}.uppers: needs bottom < top and depth`);}
     if(b.sink&&!(b.sink.at>=0&&b.sink.width>0))errors.push(`fitout.json ${where}.sink: needs at and width`);

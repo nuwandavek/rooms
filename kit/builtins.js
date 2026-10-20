@@ -17,7 +17,7 @@ export function buildBuiltins(fitout) {
 
 function counter(b,material) {
   const group=new THREE.Group(),side=b.side==='left'?-1:1,depth=b.depth,height=b.height;
-  const top=.04,plinth=.1;
+  const top=b.thickness ?? .04,plinth=b.plinth?.1:0;
   let travelled=0;
   b.path.slice(1).forEach((end,i)=>{
     const start=b.path[i],length=Math.hypot(end[0]-start[0],end[1]-start[1]);
@@ -33,9 +33,12 @@ function counter(b,material) {
     };
     // After a corner, start past the previous run's depth so parts do not overlap.
     const from=i?depth:0,body=height-top-plinth;
-    part(length-from,plinth,depth-.06,from,0,0,material(b.plinth));
-    part(length-from,body,depth-.02,from,plinth,0,material(b.base));
-    for(let x=from+.6;x<length-.1;x+=.6)part(.006,body-.04,.004,x-.003,plinth+.02,depth-.02,groove,0);
+    // Without base or plinth the counter is a floating slab (bath vanities).
+    if(b.plinth)part(length-from,plinth,depth-.06,from,0,0,material(b.plinth));
+    if(b.base) {
+      part(length-from,body,depth-.02,from,plinth,0,material(b.base));
+      for(let x=from+.6;x<length-.1;x+=.6)part(.006,body-.04,.004,x-.003,plinth+.02,depth-.02,groove,0);
+    }
     part(length-(i?depth+.02:0),top,depth+.02,i?depth+.02:0,height-top,0,material(b.top));
     if(b.sink&&b.sink.at>=travelled+from&&b.sink.at<travelled+length)
       part(b.sink.width,.006,.45,b.sink.at-travelled-b.sink.width/2,height,(depth-.45)/2,steel);

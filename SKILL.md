@@ -132,7 +132,9 @@ For layout feedback, change `home.js` and update the relevant assumptions in
 `plan.md`. For material/lighting feedback across all homes, change `kit/themes.js`.
 For a new capability needed by one project, keep its project data separate from
 reusable rendering behavior. The current kit covers architectural shells; it
-does not yet provide a furniture library or multi-storey model. Walk mode uses
+does not yet provide a furniture library or multi-storey model. Lighting assumes a roof: an undrawn
+roof slab casts shadows, so sunlight enters only through openings, and Walk mode shows
+a ceiling. Walk mode uses
 a 1.65 m eye-height perspective camera, WASD, drag or pointer-lock look, and
 plan-based wall/doorway collision in `kit/walk.js`. Keep its geometry checks when
 changing openings or coordinates. Switching tabs or opening dialogs stops movement.

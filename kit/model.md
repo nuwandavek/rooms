@@ -41,7 +41,9 @@ missing model files are build errors.
 
 Model is either an id from `library/catalog.json` or a **primitive** built at load time
 from Dims and Colour, with no library file (`kit/primitives.js`): `@frame`, `@mirror`,
-`@mirror-arch`, `@rug`, `@curtain`, `@box`. Use primitives for low-stakes flat or boxy
+`@mirror-arch`, `@rug`, `@curtain`, `@glass`, `@box`. `@fitout` marks a row built by
+`fitout.json` (kitchen cabinets, sink, a floor finish); it is counted as done and is
+never placed. Use primitives for low-stakes flat or boxy
 items (prints, mirrors, rugs, curtains, AC units); use library models for pieces with
 character. Placed library models are scaled to the row's Dims and tinted toward its
 Colour; the build notes stretches beyond about 0.6–1.67× per axis.

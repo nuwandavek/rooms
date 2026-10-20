@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {buildPrimitive,fitModel} from './primitives.js';
 import {buildBuiltins} from './builtins.js';
-import { createShell } from './geometry.js';
+import { createShell, planShape } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk} from './walk.js';
 
@@ -58,6 +58,15 @@ export function mount(home, target=document.body) {
   const fill=new THREE.DirectionalLight(light.fill,.7);
   fill.position.copy(center).add(new THREE.Vector3(span,span/2,-span));scene.add(fill);
   const shell=createShell(model,theme.materials);scene.add(shell.root);
+  // The home has a roof even though the view leaves it off. This slab is never drawn but
+  // casts shadows, so sunlight reaches rooms only through windows and open sliders.
+  const roof=new THREE.Mesh(new THREE.ExtrudeGeometry(planShape(model.outline),{depth:.2,bevelEnabled:false}),
+    new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false}));
+  roof.rotation.x=-Math.PI/2;roof.position.y=model.wallHeight;roof.castShadow=true;roof.name='Roof (shadow only)';scene.add(roof);
+  // Walk mode looks up at a ceiling.
+  const ceiling=new THREE.Mesh(new THREE.ShapeGeometry(planShape(model.outline)),
+    new THREE.MeshStandardMaterial({color:theme.materials.wall,emissive:theme.materials.wall,emissiveIntensity:.35,roughness:.95,side:THREE.BackSide}));
+  ceiling.rotation.x=-Math.PI/2;ceiling.position.y=model.wallHeight-.001;ceiling.visible=false;scene.add(ceiling);
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(span*20,span*20),
     new THREE.MeshStandardMaterial({color:theme.materials.ground,roughness:1}));
   ground.rotation.x=-Math.PI/2;ground.position.set(mid.x,-.23,mid.y);ground.receiveShadow=true;scene.add(ground);
@@ -137,6 +146,7 @@ export function mount(home, target=document.body) {
   function setMode(value) {
     if(!['orbit','walk'].includes(value))return;
     mode=value;transition=null;controls.enabled=mode!=='walk';
+    ceiling.visible=mode==='walk';
     walk.setActive(mode==='walk');
     get('labels').hidden=mode==='walk'||!get('labels-toggle').checked;
     get('labels-toggle').disabled=mode==='walk';

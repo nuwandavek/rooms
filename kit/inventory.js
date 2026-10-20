@@ -7,7 +7,8 @@
 // Room is a room id or name from home.js. Dims is w×h×d in metres (estimated); placed
 // models are scaled to it. Colour is a hex hint (#rrggbb) that placed models are tinted
 // toward. Model is an id from library/catalog.json, or `@frame`-style primitive built
-// from Dims and Colour (kit/primitives.js); optional. Photos are comma-separated image
+// from Dims and Colour (kit/primitives.js), or `@fitout` for an item built by fitout.json
+// (kitchen cabinets, vanities); optional. Photos are comma-separated image
 // paths; a bare name such as `living-01` means `assets/living-01.jpg`. Kind and Notes
 // are free text; Qty defaults to 1.
 import {PRIMITIVES} from './primitives.js';
@@ -36,7 +37,8 @@ export function applyInventory(home,markdown) {
     const qty=row.qty ? Number(row.qty) : 1;
     if(!Number.isInteger(qty)||qty<1)errors.push(`inventory.md row ${i+1} (${row.asset}): Qty must be a whole number`);
     const label=`inventory.md row ${i+1} (${row.asset})`;
-    if(row.model?.startsWith('@')) {
+    if(row.model==='@fitout'){}  // Built in fitout.json; nothing to place.
+    else if(row.model?.startsWith('@')) {
       if(!PRIMITIVES.includes(row.model.slice(1)))errors.push(`${label}: unknown primitive ${row.model}; use ${PRIMITIVES.map(p=>'@'+p).join(', ')}`);
       if(!row.dims)errors.push(`${label}: primitive ${row.model} needs Dims`);
     } else if(row.model&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.model))errors.push(`${label}: Model must be a kebab-case library id`);

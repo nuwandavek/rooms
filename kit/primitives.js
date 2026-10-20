@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 // Simple items built at load time from an inventory row's Dims and Colour, with no
-// library file: write `@frame`, `@mirror`, `@mirror-arch`, `@rug`, `@curtain` or `@box`
+// library file: write `@frame`, `@mirror`, `@mirror-arch`, `@rug`, `@curtain`, `@glass` or `@box`
 // in the Model column. Like library models they rest on y = 0, are centered on x/z,
 // and face +z; the size is exactly w×h×d. Wall-hung items are placed with a `y` height.
-export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain'];
+export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain','glass'];
 
 const material=(colour,extra={})=>new THREE.MeshStandardMaterial({color:colour,roughness:.8,metalness:0,...extra});
 function slab(group,[w,h,d],[x,y,z],mat) {
@@ -34,6 +34,7 @@ export function buildPrimitive(name,[w,h,d],colour) {
     group.add(new THREE.Mesh(extrude(outer,d),material(colour || '#1f1f1f')));
     const pane=new THREE.Mesh(extrude(shape(Math.min(.03,w/8)),d*.4),glass);pane.position.z=-d*.2;group.add(pane);
   }
+  else if(name==='glass')slab(group,[w,h,d],[0,0,0],material(colour || '#dfeef0',{roughness:.05,transparent:true,opacity:.28,depthWrite:false}));
   else if(name==='rug')slab(group,[w,h,d],[0,0,0],material(colour || '#9a9a96',{roughness:1}));
   else if(name==='curtain') {
     // A gathered panel: a plane folded in a sine wave, d deep from crest to crest.
@@ -55,9 +56,12 @@ export function fitModel(object,dims,colour) {
     object.scale.set(dims[0]/size.x || 1,dims[1]/size.y || 1,dims[2]/size.z || 1);
   }
   if(colour) {
-    const target=new THREE.Color(colour);
+    // Mix in display (sRGB) space; a linear mix leaves dark targets looking brown.
+    const target=new THREE.Color(colour).convertLinearToSRGB();
     object.traverse(o=>{if(o.isMesh)o.material=[o.material].flat().map(m=>{
-      const tinted=m.clone();tinted.color?.lerp(target,.8);return tinted;
+      const tinted=m.clone();
+      if(tinted.color)tinted.color.convertLinearToSRGB().lerp(target,.85).convertSRGBToLinear();
+      return tinted;
     });if(o.isMesh&&o.material.length===1)o.material=o.material[0];});
   }
   return object;
