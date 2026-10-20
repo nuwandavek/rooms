@@ -1,0 +1,20 @@
+{"materials": {
+"paint-warm-white": {"kind":"paint","colour":"#f4f0e8","roughness":0.9},
+"paint-textured-beige": {"kind":"speckle","colour":"#d8b98f","flecks":["#cfae82","#e0c49d"],"density":0.6,"scale":0.3,"roughness":0.95},
+"laminate-white": {"kind":"paint","colour":"#ebe9e5","roughness":0.5},
+"black-matt": {"kind":"paint","colour":"#26241f","roughness":0.6},
+"aluminium-white": {"kind":"paint","colour":"#f1f1ee","roughness":0.4,"metalness":0.3},
+"walnut": {"kind":"wood","colour":"#5b3a28","grain":"#3a2418","size":[0.5,1.0],"roughness":0.55},
+"oak-laminate": {"kind":"wood","colour":"#c4ab8c","grain":"#9c8366","size":[0.5,1.0],"roughness":0.6},
+"marble-beige-tile": {"kind":"tiles","size":[0.8,0.8],"colour":"#ece2d2","variation":0.03,"veining":0.5,"veinColour":"#d9c9b0","grout":{"width":0.002,"colour":"#ddd0bb"},"roughness":0.25},
+"granite-grey-speckle": {"kind":"speckle","colour":"#8d8b88","flecks":["#3f3d3b","#c9c6c1","#66625e","#b0aca6"],"density":0.9,"scale":0.4,"roughness":0.3},
+"granite-black": {"kind":"speckle","colour":"#1e1e20","flecks":["#46464a","#6c6c70"],"density":0.35,"scale":0.4,"roughness":0.2},
+"tile-white-gloss": {"kind":"tiles","size":[0.6,0.3],"pattern":"brick","colour":"#f2f1ee","variation":0.01,"grout":{"width":0.003,"colour":"#d9d7d2"},"roughness":0.15},
+"marble-emperador-dark": {"kind":"marble","size":[0.6,0.6],"colour":"#3b302b","veinColour":"#a89384","density":1.4,"roughness":0.25},
+"marble-striped-grey": {"kind":"marble","size":[1.2,1.2],"colour":"#e6e8e8","veinColour":"#7d8486","veins":"stripes","density":1.2,"roughness":0.2},
+"stone-pale-grey": {"kind":"tiles","size":[0.6,0.6],"colour":"#d4d4d2","variation":0.02,"grout":{"width":0.002,"colour":"#c4c4c1"},"roughness":0.4},
+"tile-beige-lattice": {"kind":"tiles","size":[0.3,0.6],"colour":"#b9a691","variation":0.02,"motif":"lattice","motifColour":"#cdbca8","grout":{"width":0.002,"colour":"#a8957f"},"roughness":0.35},
+"stripes-taupe": {"kind":"stripes","colours":["#cdbfae","#7d6a5c","#a89584","#6a584b"],"width":0.04,"roughness":0.4},
+"marble-grey-brown": {"kind":"marble","size":[0.6,0.6],"colour":"#8f847a","veinColour":"#c2b8ad","density":1,"roughness":0.25},
+"grass-artificial": {"kind":"speckle","colour":"#4f8a2e","flecks":["#3f7524","#6aa443","#2f5f1a"],"density":1.6,"scale":0.25,"roughness":1}
+}}

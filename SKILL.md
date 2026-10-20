@@ -27,6 +27,7 @@ was loaded through a discovery symlink.
 | `projects/<name>/assets/` | Viewer-sized images, loaded by relative path |
 | `projects/<name>/index.html` | Thin page template with build markers |
 | `projects/<name>/out/` | Generated HTML and checks; never edit these as source |
+| `projects/<name>/fitout.json` | Finishes (floors, wall faces and bands, doors, frames) and built-ins |
 | `projects/<name>/placements.json` | Library models positioned in the home (metres, rotation) |
 | `library/` | Shared `.glb` models by id, with provenance in `library/README.md` |
 | `kit/` | Reusable geometry, viewer, themes, commands, starter |
@@ -84,7 +85,12 @@ Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), t
    `library/generators/`; see `library/README.md`), or a primitive such as `@frame`,
    `@rug`, `@curtain`, `@box` for low-stakes items. The Assets tab renders each one.
 
-8. **Placement.** Position models in `placements.json` (metres, same plan space as the
+8. **Fit-out.** Write `fitout.json` from the photos: floor and wall finishes per room
+   (wet rooms usually tiled to a band), door and frame materials, and built-ins such
+   as kitchen counters. Add missing materials to `library/materials.json`. Check the
+   Fit-out tab with Walk-mode views from where the photos were taken.
+
+9. **Placement.** Position models in `placements.json` (metres, same plan space as the
    walls), one entry per instance linked to its inventory row with `asset`. Staging
    photos win over furniture drawn on the plan when they disagree; note it in the row.
    Check top-down, then Walk-mode views from where the photos were taken.

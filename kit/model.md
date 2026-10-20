@@ -61,6 +61,32 @@ Positions outside the room polygon and more instances than the row's Qty are bui
 errors. Items whose `y` is above the wall cutaway are hidden with the wall. Furniture
 does not yet block Walk mode.
 
+## fitout.json
+
+Everything fixed to the shell, shown on the Fit-out and Furnished tabs (Shell stays
+plain): finishes and built-ins. Materials come from the shared `library/materials.json`
+(procedural kinds `paint`, `tiles`, `marble`, `speckle`, `wood`, `stripes`, sized in
+metres; see `kit/materials.js`).
+
+```json
+{"floors": {"*": "marble-beige-tile", "kitchen": "granite-grey-speckle"},
+ "walls": [{"room": "*", "material": "paint-warm-white"},
+           {"room": "bath-3", "to": 0.9, "material": "stripes-taupe"}],
+ "doors": "walnut", "doorFrames": "black-matt", "windowFrames": "aluminium-white",
+ "builtins": [{"type": "counter", "room": "kitchen", "path": [[9.83,-2.91],[12.46,-2.91],[12.46,0.67]],
+               "depth": 0.6, "height": 0.9, "top": "granite-black", "base": "oak-laminate",
+               "plinth": "black-matt", "sink": {"at": 1.0, "width": 0.8},
+               "uppers": {"bottom": 1.45, "top": 2.2, "depth": 0.35, "material": "laminate-white"}}]}
+```
+
+Floors map a room id or `*` to a material. Wall rules finish each wall face by the
+room it looks into, optionally within a height band `from`–`to`; later rules win, and
+faces looking outside stay plain. A counter's `path` is its back edge in plan metres
+(usually along wall faces); it extends `depth` to the right of travel (`"side": "left"`
+flips it), and `sink.at` is metres along the path. Unknown rooms or materials, bad
+bands and malformed built-ins are build errors (`kit/fitout.js`). Built-ins do not yet
+block Walk mode.
+
 ## Geometry
 
 All coordinates, heights, widths and offsets are **metres**.

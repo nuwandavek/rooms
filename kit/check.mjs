@@ -61,7 +61,10 @@ export async function checkProject(name) {
     await page.locator('#tab-shell').click();
     assert.equal(await page.locator('#panel-home3d').isVisible(),true);
     assert.equal((await shown()).length,0,'Shell shows no items');
+    assert.equal(await page.evaluate(()=>window.home3d.builtins.visible),false,'Shell hides built-ins');
     await page.locator('#tab-fitout').click();
+    if(home.fitout?.builtins?.length)assert.equal(await page.evaluate(()=>window.home3d.builtins.visible&&window.home3d.builtins.children.length),home.fitout.builtins.length,'Fit-out shows built-ins');
+    await page.screenshot({path:resolve(out,'check-fitout.png')});
     assert.ok((await shown()).every(p=>kindOf(p)==='fixture'),'Fit-out shows only fixtures');
     await page.locator('#tab-furnished').click();
     if((home.placements || []).some(p=>!p.y))assert.ok((await shown()).length>0,'Furnished shows items');

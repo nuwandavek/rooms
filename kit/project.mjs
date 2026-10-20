@@ -6,6 +6,7 @@ import {applyResources} from './resources.js';
 import {applyInventory} from './inventory.js';
 import {applyPlacements} from './placements.js';
 import {parseCatalog} from './catalog.js';
+import {parseMaterials,applyFitout} from './fitout.js';
 
 export const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function projectPath(name) {
@@ -39,6 +40,9 @@ export async function loadProject(name) {
   // placements.json, when present, positions library models in the 3D home.
   const placements=await readFile(resolve(dir,'placements.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
   if(placements!==null)home=applyPlacements(home,placements);
+  // fitout.json, when present, adds finishes (library/materials.json) and built-ins.
+  const fitout=await readFile(resolve(dir,'fitout.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(fitout!==null)home=applyFitout(home,fitout,parseMaterials(await readFile(resolve(root,'library/materials.json'),'utf8')));
   const errors=validateHome(home);
   if(errors.length)throw new Error(errors.join('\n'));
   const realDir=await realpath(dir),images={};

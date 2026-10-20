@@ -69,9 +69,10 @@ Tabs are numbered by authoring stage: **1 Resources**, **2 Assets**, **3 Shell**
 **Resources** opens first: the floor plan, room photo galleries, and other source
 images. Click any image to enlarge it, or use **View in 3D** to focus its room.
 **Assets** lists the inventory. **Shell**, **Fit-out** and **Furnished** share one 3D
-viewer and add layers left to right: walls, rooms and openings; then built-ins and
-finishes (inventory rows of kind `fixture` for now; floors, skirting, counters and
-textures later); then loose furniture, lighting and decor. The viewer keeps the room
+viewer and add layers left to right: walls, rooms and openings; then the project's
+`fitout.json` (floor, wall, door and frame finishes from `library/materials.json`,
+built-ins such as kitchen counters) plus placed `fixture` rows; then loose furniture,
+lighting and decor. The viewer keeps the room
 list, selected-room photos and thumbnails beside the model, with **3D** and **Walk** modes at top left and **↺ Reset** / **Top-down** cameras at
 top right. View settings includes zoom −/+, wall cutaway, layers and lighting.
 The project name, location, bedrooms and floor area live in the collapsible

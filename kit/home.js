@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import {buildPrimitive,fitModel} from './primitives.js';
+import {buildBuiltins} from './builtins.js';
 import { createShell } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk} from './walk.js';
@@ -16,7 +17,7 @@ export function mount(home, target=document.body) {
   let focusRoom=()=>{};
   // A 3D tab in the URL selects its stage before the furniture group exists.
   let furnitureBuilt=false;
-  const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&updateFurniture());
+  const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&applyStage());
   const settings=target.querySelector('.settings');
   if(matchMedia('(max-width:760px)').matches) settings.open=false;
 
@@ -197,6 +198,13 @@ export function mount(home, target=document.body) {
     object.userData.placement=placement;furniture.add(object);updateFurniture();
   })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
   furnitureBuilt=true;
+  // Shell is the plain model; Fit-out and Furnished add finishes and built-ins from fitout.json.
+  const builtins=buildBuiltins(home.fitout || {});builtins.position.y=furniture.position.y;scene.add(builtins);
+  function applyStage() {
+    shell.setFinishes(ui.stage==='shell'?null:home.fitout || null);
+    updateFurniture();
+  }
+  applyStage();
   // Shell shows no items, Fit-out adds built-in fixtures, Furnished adds everything.
   // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
   function updateFurniture() {
@@ -207,6 +215,9 @@ export function mount(home, target=document.body) {
       const staged=ui.stage==='furnished'||(ui.stage==='fitout'&&kind==='fixture');
       object.visible=staged&&(placement.y || 0)<height;
     }
+    // Built-ins belong to Fit-out; wall cabinets above the cut hide with the wall.
+    builtins.visible=ui.stage!=='shell';
+    builtins.traverse(o=>{if(o.isMesh)o.visible=o.userData.bottom<height;});
   }
   get('wall-height').oninput=updateHeight;
   get('full-height').onclick=()=>{get('wall-height').value=model.wallHeight;setMode('orbit');};
@@ -261,7 +272,7 @@ export function mount(home, target=document.body) {
   }
   updateHeight();setLighting(home.lighting || 'daylight');select(null);frame=requestAnimationFrame(render);
   document.body.dataset.modelReady='true';
-  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
+  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,builtins,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
     dispose(){cancelAnimationFrame(frame);observer.disconnect();walk.dispose();controls.dispose();shell.dispose();ground.geometry.dispose();ground.material.dispose();grid?.geometry.dispose();grid?.material.dispose();renderer.dispose();target.replaceChildren();delete document.body.dataset.modelReady;},
   };
 }
