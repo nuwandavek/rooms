@@ -31,7 +31,8 @@ if(process.argv[1]===fileURLToPath(import.meta.url)) {
     const missing=[];
     for(const r of rows)await access(resolve(library,r.path)).catch(()=>missing.push(r.path));
     const listed=new Set(rows.map(r=>r.path));
-    const unlisted=(await readdir(resolve(library,'models'))).filter(f=>f.endsWith('.glb')&&!listed.has(`models/${f}`));
+    const files=(await readdir(resolve(library,'models'),{recursive:true})).filter(f=>f.endsWith('.glb'));
+    const unlisted=files.filter(f=>!listed.has(`models/${f}`));
     console.log(`${rows.length} catalogued, ${missing.length} missing files, ${unlisted.length} uncatalogued`);
     for(const m of missing)console.log(`missing    ${m}`);
     for(const u of unlisted)console.log(`unlisted   models/${u}`);

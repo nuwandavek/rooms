@@ -74,7 +74,7 @@ export function createRealistic({renderer,scene,home,lights,furniture}) {
     c.addPass(ao);
     c.addPass(new SMAAPass());
     c.addPass(new OutputPass());
-    c.setPixelRatio(Math.min(renderer.getPixelRatio(),1.5));c.setSize(...size);
+    c.setPixelRatio(Math.min(renderer.getPixelRatio(),1.25));c.setSize(...size);
     composers.set(camera,c);return c;
   }
 

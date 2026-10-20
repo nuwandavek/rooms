@@ -75,6 +75,14 @@ export async function loadProject(name) {
     if(present.every(Boolean))def.photo.urls=Object.fromEntries(Object.entries(urls).map(([k,v])=>[k,`../../../library/${v}`]));
     else {console.warn(`Note: textures for ${id} are missing; run node library/tools/textures.mjs`);delete def.photo;}
   }
+  // City models for Walk mode's surroundings, when the library has them (optional).
+  const {SCENE_MODELS:CITY_MODELS}=await import('./surroundings.js').catch(()=>({SCENE_MODELS:null}));
+  const cityModels={};
+  for(const id of new Set(Object.values(CITY_MODELS || {}).flat())) {
+    const entry=catalog.get(id);
+    if(entry&&await access(resolve(root,'library',entry.path)).then(()=>true,()=>false))cityModels[id]=`../../../library/${entry.path}`;
+  }
+  home={...home,cityModels};
   // Fitting to Dims is expected; a large stretch usually means the wrong model.
   for(const asset of home.inventory || []) {
     const size=catalog.get(asset.model)?.size;

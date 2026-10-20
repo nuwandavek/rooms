@@ -11,7 +11,7 @@ import {build} from 'esbuild';
 import {chromium} from 'playwright';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..');
-const models=resolve(root,'library/models');
+const models=resolve(root,'library/models');  // catalog/ and outside/
 const filter=process.argv[2] || '';
 const files=[];
 for(const entry of await readdir(models,{recursive:true,withFileTypes:true}))

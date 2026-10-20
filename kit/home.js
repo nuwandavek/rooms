@@ -17,11 +17,12 @@ export function mount(home, target=document.body) {
   target.innerHTML = markup(home);
   const get=id=>target.querySelector(`#${id}`);
   let focusRoom=()=>{};
-  // Realistic draws only when something changed: camera moves are detected per frame,
+  // Frames are drawn only when something changed: camera moves are detected per frame,
   // everything else calls invalidate().
   let dirty=true;
-  const invalidate=()=>{dirty=true;if(renderer)renderer.shadowMap.needsUpdate=true;};
-  THREE.DefaultLoadingManager.onProgress=invalidate;
+  // invalidate() redraws; pass true when something that casts shadows changed.
+  const invalidate=(shadows=false)=>{dirty=true;if(shadows&&renderer)renderer.shadowMap.needsUpdate=true;};
+  THREE.DefaultLoadingManager.onProgress=()=>invalidate(true);
   // A 3D tab in the URL selects its stage before the furniture group exists.
   let furnitureBuilt=false;
   const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&applyStage());
@@ -44,8 +45,9 @@ export function mount(home, target=document.body) {
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=theme.light.exposure;
   host.append(renderer.domElement);
-  const walk=createWalk(model,renderer.domElement,scene,()=>invalidate());
+  const walk=createWalk(model,renderer.domElement);
   const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,500);
+  walk.camera.layers.enable(1);camera.layers.enable(1);  // Layer 1 holds the city outside (kept out of mirrors).
   const controls=new OrbitControls(camera,renderer.domElement);
   controls.enableDamping=true; controls.dampingFactor=.08;
   controls.maxPolarAngle=Math.PI/2-.12; controls.minZoom=.45; controls.maxZoom=5;
@@ -142,13 +144,13 @@ export function mount(home, target=document.body) {
   function updateHeight() {
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     shell.setWallHeight(height,mode==='walk');get('height-output').value=`${height.toFixed(2)} m`;
-    updateFurniture();updateDoors();invalidate();
+    updateFurniture();updateDoors();invalidate(true);
     get('wall-height').disabled=mode==='walk';
   }
   // Walls (and their door leaves) are rebuilt on every height change.
   function updateDoors() {
     const closed=get('doors-closed').checked;
-    shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});invalidate();
+    shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});invalidate(true);
   }
   function setMode(value) {
     if(!['orbit','walk'].includes(value))return;
@@ -170,10 +172,10 @@ export function mount(home, target=document.body) {
   }
   // Walk mode looks out at a generated city under a gradient sky; the overview keeps the
   // plain paper background and ground.
-  const surroundings=createSurroundings({center,span,storey:home.storey ?? 3});scene.add(surroundings.group);
+  const surroundings=createSurroundings({center,storey:home.storey ?? 3,style:home.surroundings || 'city',models:home.cityModels});scene.add(surroundings.group);
   function updateBackdrop() {
     const outside=mode==='walk';
-    surroundings.group.visible=outside;ground.visible=!outside;scene.fog=outside?surroundings.fog:null;
+    surroundings.group.visible=outside;if(outside)surroundings.load().then(invalidate);ground.visible=!outside;scene.fog=outside?surroundings.fog:null;
     surroundings.setNight(lighting==='night');invalidate();
   }
   // Day: the theme's soft daylight. Night: faint cool moonlight, a dark sky, lamps on.
@@ -185,7 +187,7 @@ export function mount(home, target=document.body) {
     ambient.color.set(night?'#3a4766':light.sky);ambient.groundColor.set(night?'#1c1d24':light.bounce);
     ambient.intensity=night?.7:light.ambient;fill.intensity=night?.05:.7;
     get('light-day').setAttribute('aria-pressed',String(!night));get('light-night').setAttribute('aria-pressed',String(night));
-    realistic.setNight(night);realistic.relight();updateBackdrop();invalidate();
+    realistic.setNight(night);realistic.relight();updateBackdrop();invalidate(true);
   }
   get('orbit-button').onclick=()=>setMode('orbit');
   // Camera presets move the camera once; room focus reuses the last one. Reset also clears the room.
@@ -259,7 +261,7 @@ export function mount(home, target=document.body) {
   function applyStage() {
     const photo=ui.stage==='realistic';
     if(photo)loadPhotoFurniture();
-    invalidate();
+    invalidate(true);
     shell.setFinishes(ui.stage==='shell'?null:home.fitout || null,photo);
     realistic.enable(photo);
     updateFurniture();
@@ -268,7 +270,7 @@ export function mount(home, target=document.body) {
   // Shell shows no items, Fit-out adds built-in fixtures, Furnished adds everything.
   // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
   function updateFurniture() {
-    invalidate();
+    invalidate(true);
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     for(const object of furniture.children) {
       const placement=object.userData.placement;
@@ -343,12 +345,13 @@ export function mount(home, target=document.body) {
     const url=new URL(location.href);url.searchParams.set('cam',view);
     try{history.replaceState(null,'',url.href.replaceAll('%2C',','));}catch{/* Some file:// viewers disallow history updates. */}
   }
+  // Every tab draws only when the camera moved or something called invalidate().
   function draw(view){
-    if(!realistic.on){renderer.render(scene,view);return;}
     view.updateMatrixWorld();
-    if(!dirty&&lastView.equals(view.matrixWorld)&&lastProjection.equals(view.projectionMatrix))return;
+    const moved=!lastView.equals(view.matrixWorld)||!lastProjection.equals(view.projectionMatrix);
+    if(!dirty&&!moved)return;
     dirty=false;lastView.copy(view.matrixWorld);lastProjection.copy(view.projectionMatrix);
-    realistic.render(view);
+    if(realistic.on)realistic.render(view);else renderer.render(scene,view);
   }
   updateHeight();setLighting(home.lighting || 'day');select(null);frame=requestAnimationFrame(render);
   // ?mode=walk&cam=x,z,heading,pitch reopens a shared Walk view (heading/pitch in degrees).

@@ -1,4 +1,5 @@
-# Converts a downloaded pack into normalised GLBs at library/models/<id>.glb and adds
+# Converts a downloaded pack into normalised GLBs at library/models/<folder>/<id>.glb
+# (catalog: furniture and decor; outside: the city kits for Walk mode's surroundings) and adds
 # them to library/catalog.json with their source. Run through Blender:
 #
 #   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup \
@@ -34,6 +35,31 @@ PACKS = {
     'glass-set': {'glob': 'GLASS.obj', 'prefix': 'bud-vase', 'scale': 0.0002, 'turn': 0, 'split': True,
                   'part': lambda n: re.sub(r'^glass_?(\d+).*$', lambda m: f'{int(m[1]):02d}', n.lower()),
                   'glass': True, 'licence': 'Unknown (user download)', 'source': 'GLASS.obj (3ds Max export, 2015)'},
+    # Kenney City Kit (Commercial) 2.1: city blocks seen from Walk mode (kit/surroundings.js).
+    'kenney-city': {'folder': 'outside', 'glob': 'Models/GLB format/*building*.glb', 'prefix': 'city', 'scale': 8.0,  # building-a is 1.29 units for 3 floors: x8 = ~3.2 m a floor
+                    'turn': 0,
+                    'licence': 'CC0', 'source': 'Kenney City Kit (Commercial) 2.1 (kenney.nl)'},
+    # Kenney city scene kits (CC0), for Walk mode's surroundings. `files` picks a curated subset.
+    'kenney-roads': {'folder': 'outside', 'glob': 'Models/GLB format/*.glb', 'prefix': 'road', 'scale': 8.0, 'turn': 0, 'strip_prefix': 'road-',
+                     'files': ['road-straight', 'road-crossroad', 'road-intersection', 'road-crossing', 'tile-low',
+                               'light-square-double', 'light-curved', 'traffic-light', 'road-sign-street', 'dumpster'],
+                     'licence': 'CC0', 'source': 'Kenney City Kit (Roads) (kenney.nl)'},
+    'kenney-suburban': {'folder': 'outside', 'glob': 'Models/GLB format/*.glb', 'prefix': 'suburb', 'scale': 8.0, 'turn': 0,
+                        'files': [f'building-type-{c}' for c in 'abcdefghijklmnopqrstu'] +
+                                 ['fence-1x3', 'fence-low', 'driveway-short', 'path-short', 'planter', 'tree-large', 'tree-small'],
+                        'licence': 'CC0', 'source': 'Kenney City Kit (Suburban) 2.0 (kenney.nl)'},
+    'kenney-cars': {'folder': 'outside', 'glob': 'Models/GLB format/*.glb', 'prefix': 'car', 'scale': 1.7, 'turn': 0,
+                    'files': ['sedan', 'sedan-sports', 'hatchback-sports', 'suv', 'suv-luxury', 'taxi', 'van', 'delivery',
+                              'truck', 'police', 'ambulance', 'garbage-truck'],
+                    'licence': 'CC0', 'source': 'Kenney Car Kit (kenney.nl)'},
+    'kenney-nature': {'folder': 'outside', 'glob': 'Models/GLTF format/*.glb', 'prefix': 'nature', 'scale': 3.5, 'turn': 0,
+                      'files': ['tree_default', 'tree_oak', 'tree_detailed', 'tree_fat', 'tree_simple', 'tree_small', 'tree_tall',
+                                'tree_cone', 'tree_palmTall', 'plant_bush', 'plant_bushLarge', 'plant_bushDetailed',
+                                'flower_redA', 'flower_yellowA', 'flower_purpleA', 'grass_large', 'rock_smallA'],
+                      'licence': 'CC0', 'source': 'Kenney Nature Kit (kenney.nl)'},
+    'kenney-forest': {'folder': 'outside', 'glob': 'Models/GLB format/*.glb', 'prefix': 'forest', 'scale': 4.2, 'turn': 0,
+                      'files': ['tree', 'tree-high', 'plant'],
+                      'licence': 'CC0', 'source': 'Kenney Mini Forest (kenney.nl)'},
     'quaternius-2019': {'glob': 'OBJ/*.obj', 'prefix': 'quaternius19', 'scale': 0.7, 'turn': 0,
                         'licence': 'CC0', 'source': 'Quaternius Furniture Pack, Mar 2019'},
 }
@@ -125,12 +151,14 @@ def run(pack, folder):
     os.makedirs(MODELS, exist_ok=True)
     jobs = []
     for path in sorted(glob.glob(os.path.join(folder, cfg['glob']))):
+        if cfg.get('files') and os.path.splitext(os.path.basename(path))[0] not in cfg['files']: continue
         if cfg.get('split'):
             load(path)
             jobs += [(path, o.name, cfg['part'](o.name)) for o in bpy.context.scene.objects if o.type == 'MESH']
         else:
             name = kebab(os.path.splitext(os.path.basename(path))[0])
             if cfg.get('strip') and name.endswith(cfg['strip']): name = name[:-len(cfg['strip'])]
+            if cfg.get('strip_prefix') and name.startswith(cfg['strip_prefix']): name = name[len(cfg['strip_prefix']):]
             jobs.append((path, None, name))
     for path, part, name in jobs:
         id = f'{cfg["prefix"]}-{kebab(name)}'
@@ -146,9 +174,10 @@ def run(pack, folder):
                 if o.type == 'MESH':
                     m = o.modifiers.new('budget', 'DECIMATE'); m.ratio = MAX_TRIS / tris
             tris, mats = stats()
-        bpy.ops.export_scene.gltf(filepath=os.path.join(MODELS, id + '.glb'), export_format='GLB',
+        folder_out = os.path.join(MODELS, cfg.get('folder', 'catalog')); os.makedirs(folder_out, exist_ok=True)
+        bpy.ops.export_scene.gltf(filepath=os.path.join(folder_out, id + '.glb'), export_format='GLB',
                                   export_yup=True, export_apply=True, export_cameras=False, export_lights=False)
-        entries.append({'id': id, 'path': f'models/{id}.glb', 'size': size, 'tris': tris,
+        entries.append({'id': id, 'path': f'models/{cfg.get("folder", "catalog")}/{id}.glb', 'size': size, 'tris': tris,
                         'origin': 'sourced', 'licence': cfg['licence'],
                         'source': f'{cfg["source"]}: {os.path.relpath(path, folder)}' + (f' ({part})' if part else ''),
                         'materials': mats})

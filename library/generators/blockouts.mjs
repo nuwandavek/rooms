@@ -72,11 +72,11 @@ function glb(boxes) {
 
 const entries=[];
 for(const [id,{note,boxes}] of Object.entries(models)) {
-  await writeFile(resolve(here,'../models',`${id}.glb`),glb(boxes));
+  await writeFile(resolve(here,'../models/catalog',`${id}.glb`),glb(boxes));
   const lo=[0,1,2].map(a=>Math.min(...boxes.map(b=>a===1?b[4]:b[a+3]-b[a]/2)));
   const hi=[0,1,2].map(a=>Math.max(...boxes.map(b=>a===1?b[4]+b[1]:b[a+3]+b[a]/2)));
-  entries.push({id,path:`models/${id}.glb`,size:hi.map((v,a)=>v-lo[a]),origin:'generated',
+  entries.push({id,path:`models/catalog/${id}.glb`,size:hi.map((v,a)=>v-lo[a]),origin:'generated',
     source:'generators/blockouts.mjs',licence:'Own work',tris:boxes.length*12,notes:note});
-  console.log(`library/models/${id}.glb`);
+  console.log(`library/models/catalog/${id}.glb`);
 }
 await addToCatalog(entries);

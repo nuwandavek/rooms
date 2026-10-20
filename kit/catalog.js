@@ -2,7 +2,7 @@
 // (gitignored). No browser required.
 //
 //   {"models": [
-//     {"id":"kenney-chair", "path":"models/kenney-chair.glb", "category":"seating",
+//     {"id":"kenney-chair", "path":"models/catalog/kenney-chair.glb", "category":"seating",
 //      "size":[0.4,0.94,0.4], "origin":"sourced", "source":"Kenney Furniture Kit 2.0: chair.glb",
 //      "licence":"CC0", "tris":120, "materials":["wood"], "notes":""}
 //   ]}

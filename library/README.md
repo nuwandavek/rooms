@@ -6,7 +6,7 @@ Shared 3D models for every home, referenced by id from a project's `inventory.md
 | Path | Tracked | What |
 | --- | --- | --- |
 | `catalog.json` | yes | One entry per model: id, path, category, size, origin, source, licence |
-| `models/` | **no** (gitignored) | The GLB files, flat: `models/<id>.glb`. Shared separately |
+| `models/` | **no** (gitignored) | The GLB files: `models/catalog/<id>.glb` (furniture, decor) and `models/outside/<id>.glb` (cartoon city kits for Walk mode's surroundings). Shared separately |
 | `generators/` | yes | Code that builds models we make ourselves |
 | `tools/` | yes | Importing downloads, catalog checks, contact sheets |
 
@@ -20,7 +20,7 @@ fails if an id is not in the catalog or its file is missing from `models/`.
 | Field | Meaning |
 | --- | --- |
 | `id` | Kebab-case, used in `inventory.md` and `placements.json`; prefixed by pack |
-| `path` | Relative to `library/`, e.g. `models/kenney-chair.glb` |
+| `path` | Relative to `library/`, e.g. `models/catalog/kenney-chair.glb` |
 | `category` | First guess from the name; correct by hand (hand edits survive re-import) |
 | `size` | `[w, h, d]` in metres, measured after import |
 | `origin` | `sourced` (download as is), `modified` (notes name the original id), `generated` |
@@ -34,7 +34,7 @@ fails if an id is not in the catalog or its file is missing from `models/`.
 2. **Modify one.** Copy and edit it (Blender), save as a new id, and add a row with
    origin `modified` and the original id in Notes.
 3. **Generate one.** Write or extend a script in `generators/` that writes
-   `models/<id>.glb` and calls `addToCatalog` (see `generators/blockouts.mjs`). Generated
+   `models/catalog/<id>.glb` and calls `addToCatalog` (see `generators/blockouts.mjs`). Generated
    models are reusable library entries like any other.
 
 ## Importing a download

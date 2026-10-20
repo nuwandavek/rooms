@@ -1,4 +1,4 @@
-import {PerspectiveCamera,Euler,Vector3,Vector2,Plane,Raycaster,Mesh,RingGeometry,CircleGeometry,MeshBasicMaterial,Group} from 'three';
+import {PerspectiveCamera,Euler,Vector3,Vector2,Plane,Raycaster,Group} from 'three';
 
 export const EYE_HEIGHT=1.65;
 export function inside(point,polygon) {
@@ -55,24 +55,38 @@ export function walkSpace(model) {
 }
 
 // Walk controls, chosen to work for people who do not play games:
-// - click the floor to glide there (a ring shows where you will land);
+// - click the floor to glide there (a ring marks the spot until you arrive);
 // - drag to look, Street View style (drag the view itself);
 // - WASD or arrow keys to move, Q/E or ←/→ to turn, the scroll wheel to step;
 // - optional pointer-lock mouse look, which turns like a game (FPS-style).
-// `onChange` is told when something visible changes without the camera moving (the ring).
-export function createWalk(model,canvas,scene,onChange=()=>{}) {
-  const camera=new PerspectiveCamera(70,1,.05,500),space=walkSpace(model);
+export function createWalk(model,canvas) {
+  // The far plane reaches the city and sky dome outside.
+  const camera=new PerspectiveCamera(70,1,.05,1500),space=walkSpace(model);
   const keys=new Set(),rotation=new Euler(0,0,0,'YXZ'),abort=new AbortController();
   let active=false,drag=null,glide=null;
   canvas.tabIndex=0;canvas.setAttribute('aria-label','Home model. In Walk mode click the floor to walk there, drag to look around, or use W A S D and the arrow keys.');
   const on=(el,event,fn,options={})=>el.addEventListener(event,fn,{signal:abort.signal,...options});
   const stop=()=>{keys.clear();drag=null;glide=null;};
   const MOVE_KEYS=['KeyW','KeyA','KeyS','KeyD','KeyQ','KeyE','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
-  // Landing ring on the floor under the cursor.
-  const ring=new Group();ring.visible=false;ring.renderOrder=2;
-  const ringMaterial=new MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.85,depthWrite:false,toneMapped:false});
-  ring.add(new Mesh(new RingGeometry(.2,.25,48),ringMaterial),new Mesh(new CircleGeometry(.05,24),ringMaterial));
-  ring.children.forEach(m=>m.rotation.x=-Math.PI/2);scene?.add(ring);
+  // Landing ring: an SVG outline over the canvas, projected onto the floor in true
+  // perspective. Drawing it never redraws the 3D scene.
+  const svgNS='http://www.w3.org/2000/svg';
+  const overlay=document.createElementNS(svgNS,'svg');
+  overlay.setAttribute('class','walk-ring');overlay.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible';
+  const outline=document.createElementNS(svgNS,'polygon'),dot=document.createElementNS(svgNS,'polygon');
+  for(const [el,w] of [[outline,2.5],[dot,0]]){el.setAttribute('fill',w?'none':'rgba(255,255,255,.85)');el.setAttribute('stroke','rgba(255,255,255,.9)');el.setAttribute('stroke-width',w);overlay.append(el);}
+  canvas.parentElement?.append(overlay);
+  let ringPoint=null;
+  const projected=new Vector3();
+  function drawRing() {
+    if(!ringPoint){overlay.style.display='none';return;}
+    const rect=canvas.getBoundingClientRect(),circle=r=>Array.from({length:40},(_,k)=>{
+      const a=k/40*Math.PI*2;projected.set(ringPoint[0]+Math.cos(a)*r,.02,ringPoint[1]+Math.sin(a)*r).project(camera);
+      return `${((projected.x+1)/2*rect.width).toFixed(1)},${((1-projected.y)/2*rect.height).toFixed(1)}`;
+    }).join(' ');
+    outline.setAttribute('points',circle(.24));dot.setAttribute('points',circle(.05));overlay.style.display='';
+  }
+  const showRing=point=>{ringPoint=point;drawRing();};
   const raycaster=new Raycaster(),floor=new Plane(new Vector3(0,1,0),-.02),hit=new Vector3(),pointer=new Vector2();
   function floorPoint(event) {
     const rect=canvas.getBoundingClientRect();
@@ -80,11 +94,6 @@ export function createWalk(model,canvas,scene,onChange=()=>{}) {
     raycaster.setFromCamera(pointer,camera);
     if(!raycaster.ray.intersectPlane(floor,hit)||hit.distanceTo(camera.position)>14)return null;
     const point=[hit.x,hit.z];return space.canStand(point)?point:null;
-  }
-  function showRing(point) {
-    const visible=Boolean(point);
-    if(visible)ring.position.set(point[0],.02,point[1]);
-    if(visible||ring.visible){ring.visible=visible;onChange();}
   }
   const look=(dx,dy,grab)=>{
     // Grab-style drag moves the view with the hand; mouse look turns toward the mouse.
@@ -107,20 +116,20 @@ export function createWalk(model,canvas,scene,onChange=()=>{}) {
     canvas.setPointerCapture(e.pointerId);
   });
   on(canvas,'pointermove',e=>{
+    // Plain mouse movement only moves the landing ring (no 3D redraw); a drag turns the view.
     if(!active||document.pointerLockElement===canvas)return;
-    if(!drag){showRing(floorPoint(e));return;}
+    if(!drag){if(!glide)showRing(floorPoint(e));return;}
     look(e.clientX-drag.x,e.clientY-drag.y,true);drag.x=e.clientX;drag.y=e.clientY;
-    if(Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)>6)showRing(null);
   });
   on(canvas,'pointerup',e=>{
     // A click (not a drag) on the floor walks there.
     if(drag&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<=6&&performance.now()-drag.time<500) {
-      const point=floorPoint(e);if(point)glide={target:point};
+      const point=floorPoint(e);if(point){glide={target:point};showRing(point);}
     }
     drag=null;
   });
   on(canvas,'pointercancel',()=>drag=null);
-  on(canvas,'pointerleave',()=>showRing(null));
+  on(canvas,'pointerleave',()=>{if(!glide)showRing(null);});
   on(canvas,'wheel',e=>{
     if(!active)return;e.preventDefault();
     const [fx,fz]=forwardOf(),step=Math.sign(-e.deltaY)*.5;
@@ -149,6 +158,7 @@ export function createWalk(model,canvas,scene,onChange=()=>{}) {
     lock() {if(active){canvas.focus({preventScroll:true});try{canvas.requestPointerLock?.()?.catch(()=>{});}catch{/* Drag-to-look remains available. */}}},
     update(dt) {
       if(!active)return;
+      if(ringPoint)drawRing();  // Keep the ring on its floor spot as the view moves.
       const t=Math.min(dt,.05);
       // Turning keys rotate in place.
       const turn=Number(keys.has('ArrowLeft')||keys.has('KeyQ'))-Number(keys.has('ArrowRight')||keys.has('KeyE'));
@@ -167,10 +177,10 @@ export function createWalk(model,canvas,scene,onChange=()=>{}) {
         const dx=glide.target[0]-position[0],dz=glide.target[1]-position[1],left=Math.hypot(dx,dz);
         const step=Math.min(left,Math.max(.6,left*3)*t);
         const [x,z]=space.move(position,dx/left*step || 0,dz/left*step || 0);
-        if(left<.03||Math.hypot(x-position[0],z-position[1])<1e-4)glide=null;
+        if(left<.03||Math.hypot(x-position[0],z-position[1])<1e-4){glide=null;showRing(null);}
         camera.position.set(x,EYE_HEIGHT+.015,z);
       }
     },
-    dispose(){setActive(false);abort.abort();scene?.remove(ring);},
+    dispose(){setActive(false);abort.abort();overlay.remove();},
   };
 }
