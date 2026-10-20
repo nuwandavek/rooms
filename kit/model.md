@@ -34,9 +34,9 @@ Other prose is ignored by the parser; use it for provenance.
 
 When a project has `inventory.md`, every markdown table in it with `Asset` and `Room`
 columns becomes `home.inventory` (see `kit/inventory.js`). Columns: Asset, Room (id or
-name), Kind, Qty (whole number, default 1), Model (a `library/<id>.glb` id), Photos
+name), Kind, Qty (whole number, default 1), Model (an id from `library/catalog.json`), Photos
 (comma-separated; `living-01` means `assets/living-01.jpg`), Notes. Unknown rooms,
-bad quantities and missing library files are build errors.
+bad quantities, uncatalogued ids and missing model files are build errors.
 
 Library models are shared by all homes, in metres, resting on y = 0, centered on x/z,
 front facing +z. They load with `fetch`, so their previews need `kit/home serve`.

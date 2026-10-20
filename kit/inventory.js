@@ -4,7 +4,7 @@
 //
 //   | Asset | Room | Kind | Qty | Model | Photos | Notes |
 //
-// Room is a room id or name from home.js. Model is a library id (library/<id>.glb),
+// Room is a room id or name from home.js. Model is an id from library/catalog.json,
 // optional. Photos are comma-separated image paths; a bare name such as `living-01`
 // means `assets/living-01.jpg`. Kind, Qty and Notes are free text (Qty defaults to 1).
 const cells = line => line.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim().replace(/^`|`$/g,''));

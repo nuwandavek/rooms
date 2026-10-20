@@ -1,7 +1,7 @@
 # Inventory
 
 The Assets tab reads the tables below. Room is a room id or name from `home.js`;
-Model is a library id (`library/<id>.glb`), optional; Photos are asset names.
+Model is an id from `library/catalog.json`, optional; Photos are asset names.
 
 | Asset | Room | Kind | Qty | Model | Photos | Notes |
 | --- | --- | --- | --- | --- | --- | --- |

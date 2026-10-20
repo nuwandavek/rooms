@@ -84,8 +84,10 @@ To open directly in 3D, visit `http://127.0.0.1:4173/?tab=home3d`.
 
 **Assets** lists each project's `inventory.md`: every item per room with its kind,
 quantity, the photos it appears in, and a rendered preview when it references a model
-in the shared `library/`. Previews load models over the local server, so use
-`kit/home serve`. Regenerate the box blockouts with `node library/blockouts.mjs`.
+from the shared library. Previews load models over the local server, so use
+`kit/home serve`. The library is `library/catalog.json` (tracked: id, path, size,
+source) plus `library/models/*.glb` (gitignored, shared separately); see
+`library/README.md` for importing downloads and generating models.
 `placements.json` puts library models into the 3D home (toggle with **Furniture** in
 View settings); see `kit/model.md` for the format.
 

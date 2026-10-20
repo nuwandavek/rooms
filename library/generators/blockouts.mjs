@@ -1,10 +1,12 @@
 #!/usr/bin/env node
-// Writes simple box-built blockout models to library/<id>.glb. Run: node library/blockouts.mjs
+// Writes simple box-built blockout models to library/models/<id>.glb and lists them in
+// library/catalog.json. Run: node library/generators/blockouts.mjs
 // Units are metres; models sit on y=0, centered on x/z, front facing +z.
 // These stand in for sizing and placement until a sourced or better-made model replaces them.
 import {writeFile} from 'node:fs/promises';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {addToCatalog} from '../tools/catalog.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url));
 // [width, height, depth, x, y(bottom), z, colour]
@@ -60,7 +62,7 @@ function glb(boxes) {
     nodes.push({mesh:meshes.length-1});
   }
   const bin=Buffer.concat(chunks);
-  const json={asset:{version:'2.0',generator:'rooms library/blockouts.mjs'},scene:0,scenes:[{nodes:nodes.map((_,i)=>i)}],nodes,meshes,accessors,bufferViews,
+  const json={asset:{version:'2.0',generator:'rooms library/generators/blockouts.mjs'},scene:0,scenes:[{nodes:nodes.map((_,i)=>i)}],nodes,meshes,accessors,bufferViews,
     buffers:[{byteLength:bin.length}],materials:colours.map(c=>({pbrMetallicRoughness:{baseColorFactor:[...linear(c),1],metallicFactor:0,roughnessFactor:.85}}))};
   let text=Buffer.from(JSON.stringify(json));text=Buffer.concat([text,Buffer.alloc((4-text.length%4)%4,0x20)]);
   const header=Buffer.alloc(12);header.writeUInt32LE(0x46546C67,0);header.writeUInt32LE(2,4);header.writeUInt32LE(12+8+text.length+8+bin.length,8);
@@ -68,7 +70,13 @@ function glb(boxes) {
   return Buffer.concat([header,chunk(text,0x4E4F534A),chunk(bin,0x004E4942)]);
 }
 
-for(const [id,{boxes}] of Object.entries(models)) {
-  await writeFile(resolve(here,`${id}.glb`),glb(boxes));
-  console.log(`library/${id}.glb`);
+const entries=[];
+for(const [id,{note,boxes}] of Object.entries(models)) {
+  await writeFile(resolve(here,'../models',`${id}.glb`),glb(boxes));
+  const lo=[0,1,2].map(a=>Math.min(...boxes.map(b=>a===1?b[4]:b[a+3]-b[a]/2)));
+  const hi=[0,1,2].map(a=>Math.max(...boxes.map(b=>a===1?b[4]+b[1]:b[a+3]+b[a]/2)));
+  entries.push({id,path:`models/${id}.glb`,size:hi.map((v,a)=>v-lo[a]),origin:'generated',
+    source:'generators/blockouts.mjs',licence:'Own work',tris:boxes.length*12,notes:note});
+  console.log(`library/models/${id}.glb`);
 }
+await addToCatalog(entries);

@@ -77,9 +77,9 @@ Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), t
 7. **Assets.** Go through every room photo and list what is in it in `inventory.md`:
    one table row per distinct item with Room (id), Kind (fixture, appliance,
    furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
-   Reference a `library/` model id where one fits; leave Model empty otherwise.
-   Add models to `library/` with provenance in `library/README.md`; box blockouts can
-   be generated with `node library/blockouts.mjs`. The Assets tab renders each model.
+   Reference a model id from `library/catalog.json` where one fits: use it as is, or
+   make a modified copy, or write a generator in `library/generators/`; leave Model
+   empty otherwise. See `library/README.md`. The Assets tab renders each model.
 
 8. **Placement.** Position models in `placements.json` (metres, same plan space as the
    walls). Use furniture drawn on the source plan when present, else the photos;

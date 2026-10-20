@@ -5,6 +5,7 @@ import {validateHome,imagePaths} from './validate.js';
 import {applyResources} from './resources.js';
 import {applyInventory} from './inventory.js';
 import {applyPlacements} from './placements.js';
+import {parseCatalog} from './catalog.js';
 
 export const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function projectPath(name) {
@@ -50,11 +51,14 @@ export async function loadProject(name) {
     // out/index.html sits one level below the project; this resolves over file:// and the server.
     images[path]='../'+path.split('/').map(encodeURIComponent).join('/');
   }
-  // Models come from the shared library/; out/index.html is three levels below the repo root.
-  const models={};
+  // Models are looked up by id in library/catalog.json. The files are gitignored and shared
+  // separately, so a catalogued model may be absent here. out/index.html is three levels below the repo root.
+  const models={},catalog=new Map(parseCatalog(await readFile(resolve(root,'library/catalog.json'),'utf8').catch(()=>'')).map(r=>[r.id,r]));
   for(const id of new Set([...(home.inventory || []),...(home.placements || [])].map(a=>a.model).filter(Boolean))) {
-    await access(resolve(root,'library',`${id}.glb`)).catch(()=>{throw new Error(`No library model library/${id}.glb (referenced in inventory.md or placements.json)`);});
-    models[id]=`../../../library/${id}.glb`;
+    const entry=catalog.get(id);
+    if(!entry)throw new Error(`No model "${id}" in library/catalog.json (referenced in inventory.md or placements.json)`);
+    await access(resolve(root,'library',entry.path)).catch(()=>{throw new Error(`Model "${id}" is catalogued but library/${entry.path} is missing; get the library models folder`);});
+    models[id]=`../../../library/${entry.path}`;
   }
   await access(resolve(dir,'index.html'));
   return {dir,home,images,models};
