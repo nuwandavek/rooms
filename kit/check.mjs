@@ -116,8 +116,8 @@ export async function checkProject(name) {
     await page.locator('#tab-assets').click();
     assert.equal(await page.locator('#panel-assets').isVisible(),true);
     assert.equal(await page.locator('.asset-table tbody tr').count(),(home.inventory || []).length);
-    await page.waitForFunction(()=>!document.querySelector('[data-model] span'),{},{timeout:15000});
-    assert.equal(await page.locator('[data-model] img').count(),(home.inventory || []).filter(a=>a.model).length,'Every library model renders a preview');
+    await page.waitForFunction(()=>!document.querySelector('[data-model] span, [data-primitive] span'),{},{timeout:15000});
+    assert.equal(await page.locator('[data-model] img, [data-primitive] img').count(),(home.inventory || []).filter(a=>a.model).length,'Every library model and primitive renders a preview');
     await page.screenshot({path:resolve(out,'check-assets.png')});
     await page.locator('#tab-home3d').click();
     await page.setViewportSize({width:390,height:844});

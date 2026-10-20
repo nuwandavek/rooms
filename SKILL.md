@@ -77,13 +77,15 @@ Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), t
 7. **Assets.** Go through every room photo and list what is in it in `inventory.md`:
    one table row per distinct item with Room (id), Kind (fixture, appliance,
    furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
-   Reference a model id from `library/catalog.json` where one fits: use it as is, or
-   make a modified copy, or write a generator in `library/generators/`; leave Model
-   empty otherwise. See `library/README.md`. The Assets tab renders each model.
+   Estimate Dims (w×h×d) and a Colour hint per row. For Model, use a catalog id from
+   `library/catalog.json` where one fits (as is, a modified copy, or a new generator in
+   `library/generators/`; see `library/README.md`), or a primitive such as `@frame`,
+   `@rug`, `@curtain`, `@box` for low-stakes items. The Assets tab renders each one.
 
 8. **Placement.** Position models in `placements.json` (metres, same plan space as the
-   walls). Use furniture drawn on the source plan when present, else the photos;
-   link each instance to its inventory row with `asset`. Check top-down and 3D.
+   walls), one entry per instance linked to its inventory row with `asset`. Staging
+   photos win over furniture drawn on the plan when they disagree; note it in the row.
+   Check top-down, then Walk-mode views from where the photos were taken.
 
 Continue within the user's authorized scope; this workflow does not impose
 stage-by-stage signoffs. Ask only when missing source evidence or an unresolved

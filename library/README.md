@@ -56,4 +56,4 @@ Imported so far (all CC0): Kenney Furniture Kit 2.0 (140, ×2 scale), Quaternius
 Furniture Pack Oct 2017 (23, ×1.3, fronts turned from +x), Quaternius Furniture Pack
 Mar 2019 (20, ×0.7).
 
-Where models should come from is discussed in [SOURCING.md](SOURCING.md).
+Plans for the library (matching, textures, scale) are in [ROADMAP.md](../ROADMAP.md).

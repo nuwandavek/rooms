@@ -18,10 +18,13 @@ function setup() {
 }
 
 // Resolves to {src, size:[w,h,d]} in metres, measured from the model's bounds.
-export function previewModel(url) {
-  if (!cache.has(url)) cache.set(url, (async () => {
+export const previewModel = url => previewObject(url, async () => (await loader.loadAsync(url)).scene);
+
+// The same for any object, e.g. a primitive; `key` caches the result.
+export function previewObject(key, make) {
+  if (!cache.has(key)) cache.set(key, (async () => {
     if (!renderer) setup();
-    const object = (await loader.loadAsync(url)).scene;
+    const object = await make();
     const box = new THREE.Box3().setFromObject(object);
     const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
     const distance = size.length() / 2 / Math.sin(THREE.MathUtils.degToRad(15)) * 1.02;
@@ -33,5 +36,5 @@ export function previewModel(url) {
     object.traverse(o => { o.geometry?.dispose(); [o.material].flat().forEach(m => m?.dispose()); });
     return {src: renderer.domElement.toDataURL('image/png'), size: [size.x, size.y, size.z]};
   })());
-  return cache.get(url);
+  return cache.get(key);
 }

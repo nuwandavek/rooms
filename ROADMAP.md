@@ -1,7 +1,7 @@
 # Roadmap: from shell to furnished, textured homes
 
-Design notes from discussion, not yet implemented. Model sourcing options are in
-[library/SOURCING.md](library/SOURCING.md). Current behavior is in [README.md](README.md)
+Design notes from discussion, not yet implemented. The model library is described in
+[library/README.md](library/README.md). Current behavior is in [README.md](README.md)
 and [kit/model.md](kit/model.md).
 
 ## Where we are

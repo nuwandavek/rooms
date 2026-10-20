@@ -54,11 +54,18 @@ export async function loadProject(name) {
   // Models are looked up by id in library/catalog.json. The files are gitignored and shared
   // separately, so a catalogued model may be absent here. out/index.html is three levels below the repo root.
   const models={},catalog=new Map(parseCatalog(await readFile(resolve(root,'library/catalog.json'),'utf8').catch(()=>'')).map(r=>[r.id,r]));
-  for(const id of new Set([...(home.inventory || []),...(home.placements || [])].map(a=>a.model).filter(Boolean))) {
+  for(const id of new Set([...(home.inventory || []),...(home.placements || [])].map(a=>a.model).filter(m=>m&&!m.startsWith('@')))) {
     const entry=catalog.get(id);
     if(!entry)throw new Error(`No model "${id}" in library/catalog.json (referenced in inventory.md or placements.json)`);
     await access(resolve(root,'library',entry.path)).catch(()=>{throw new Error(`Model "${id}" is catalogued but library/${entry.path} is missing; get the library models folder`);});
     models[id]=`../../../library/${entry.path}`;
+  }
+  // Fitting to Dims is expected; a large stretch usually means the wrong model.
+  for(const asset of home.inventory || []) {
+    const size=catalog.get(asset.model)?.size;
+    if(!size||!asset.dims)continue;
+    const ratios=asset.dims.map((v,i)=>v/size[i]);
+    if(ratios.some(r=>r<.6||r>1.67))console.warn(`Note: "${asset.name}" stretches ${asset.model} by ${ratios.map(r=>r.toFixed(2)).join(' × ')} to fit its Dims`);
   }
   await access(resolve(dir,'index.html'));
   return {dir,home,images,models};

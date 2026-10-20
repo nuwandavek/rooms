@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import {buildPrimitive,fitModel} from './primitives.js';
 import { createShell } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk} from './walk.js';
@@ -122,6 +123,8 @@ export function mount(home, target=document.body) {
   function updateHeight() {
     const height=mode==='walk'?model.wallHeight:Number(get('wall-height').value);
     shell.setWallHeight(height,mode==='walk');get('height-output').value=`${height.toFixed(2)} m`;
+    // Wall-hung items above the cut (AC units, high frames) would float; hide them like the wall.
+    furniture.children.forEach(o=>o.visible=(o.userData.placement.y || 0)<height);
     get('wall-height').disabled=mode==='walk';
   }
   function setMode(value) {
@@ -161,16 +164,23 @@ export function mount(home, target=document.body) {
   get('zoom-in').onclick=()=>zoomBy(1.25);get('zoom-out').onclick=()=>zoomBy(1/1.25);
   get('labels-toggle').onchange=e=>get('labels').hidden=!e.target.checked;
   get('openings-toggle').onchange=e=>shell.openings.visible=e.target.checked;
-  // Placed library models. Each file loads once and is cloned per placement.
+  // Placed items: library models (each file loads once, cloned per placement, fitted to
+  // the inventory row's Dims and tinted toward its Colour) or primitives built from Dims.
   const furniture=new THREE.Group();furniture.name='Furniture';scene.add(furniture);
+  furniture.position.y=.016;  // Room floors sit at 0.015 (geometry.js); stand on them.
   const loader=new GLTFLoader(),sources=new Map();
   const furnitureReady=Promise.allSettled((home.placements || []).map(async placement=>{
-    if(!sources.has(placement.modelUrl))sources.set(placement.modelUrl,loader.loadAsync(placement.modelUrl));
-    const object=(await sources.get(placement.modelUrl)).scene.clone(true);
-    object.position.set(placement.at[0],0,placement.at[1]);
+    let object;
+    if(placement.model.startsWith('@'))object=buildPrimitive(placement.model.slice(1),placement.dims,placement.colour);
+    else {
+      if(!sources.has(placement.modelUrl))sources.set(placement.modelUrl,loader.loadAsync(placement.modelUrl));
+      object=fitModel((await sources.get(placement.modelUrl)).scene.clone(true),placement.dims,placement.colour);
+    }
+    object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
     object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
     object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
     object.userData.placement=placement;furniture.add(object);
+    object.visible=(placement.y || 0)<(mode==='walk'?model.wallHeight:Number(get('wall-height').value));
   })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
   get('furniture-toggle').onchange=e=>furniture.visible=e.target.checked;
   get('wall-height').oninput=updateHeight;

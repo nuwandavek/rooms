@@ -34,20 +34,31 @@ Other prose is ignored by the parser; use it for provenance.
 
 When a project has `inventory.md`, every markdown table in it with `Asset` and `Room`
 columns becomes `home.inventory` (see `kit/inventory.js`). Columns: Asset, Room (id or
-name), Kind, Qty (whole number, default 1), Model (an id from `library/catalog.json`), Photos
-(comma-separated; `living-01` means `assets/living-01.jpg`), Notes. Unknown rooms,
-bad quantities, uncatalogued ids and missing model files are build errors.
+name), Kind, Qty (whole number, default 1), Dims (w×h×d metres, estimated), Colour
+(`#rrggbb` hint), Model, Photos (comma-separated; `living-01` means
+`assets/living-01.jpg`), Notes. Unknown rooms, bad quantities, uncatalogued ids and
+missing model files are build errors.
+
+Model is either an id from `library/catalog.json` or a **primitive** built at load time
+from Dims and Colour, with no library file (`kit/primitives.js`): `@frame`, `@mirror`,
+`@mirror-arch`, `@rug`, `@curtain`, `@box`. Use primitives for low-stakes flat or boxy
+items (prints, mirrors, rugs, curtains, AC units); use library models for pieces with
+character. Placed library models are scaled to the row's Dims and tinted toward its
+Colour; the build notes stretches beyond about 0.6–1.67× per axis.
 
 Library models are shared by all homes, in metres, resting on y = 0, centered on x/z,
 front facing +z. They load with `fetch`, so their previews need `kit/home serve`.
 
 ## placements.json
 
-Positions library models in the home: `{"placements":[{model, room, at:[x,z],
-rotation, asset?}]}`. `at` is the footprint center in metres in the same plan space
-as the walls; `rotation` is degrees about the vertical (0 = model front faces +z,
-90 = +x). `asset` links the instance to an inventory row, which the Assets tab
-counts as placed. Positions outside the room polygon are build errors. Furniture
+Positions inventory items in the home: `{"placements":[{asset, room, at:[x,z],
+rotation, y?, model?}]}`, one entry per instance. `asset` names the inventory row,
+whose Model, Dims and Colour the instance uses (`model` overrides). `at` is the
+footprint center in metres in the same plan space as the walls; `rotation` is degrees
+about the vertical (0 = front faces +z, 90 = +x); `y` lifts the base (lamps on tables,
+wall-hung prints and AC units; set `at` half the item's depth off the wall face).
+Positions outside the room polygon and more instances than the row's Qty are build
+errors. Items whose `y` is above the wall cutaway are hidden with the wall. Furniture
 does not yet block Walk mode.
 
 ## Geometry

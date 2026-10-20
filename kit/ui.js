@@ -1,6 +1,7 @@
 export const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const safeLink = value => /^https?:\/\//.test(value || '') ? escape(value) : '#';
-import {previewModel} from './preview.js';
+import {previewModel,previewObject} from './preview.js';
+import {buildPrimitive} from './primitives.js';
 
 export const roomPhotos = room => [...new Set([room?.photo,...(room?.photos || [])].filter(Boolean))];
 
@@ -18,8 +19,10 @@ export function markup(home) {
     <div class="resource-room-heading"><div><h3>${escape(room.name)}</h3><p>${items.length} ${items.length===1?'asset':'assets'} · ${items.reduce((n,{asset})=>n+asset.qty,0)} pieces</p></div><button class="quiet-button" data-focus-room="${escape(room.id)}">View in 3D ↗</button></div>
     <table class="asset-table"><thead><tr><th>Model</th><th>Asset</th><th>Kind</th><th>Qty</th><th>Placed</th><th>Seen in</th><th>Notes</th></tr></thead><tbody>
     ${items.map(({asset,i})=>`<tr>
-      <td>${asset.modelUrl?`<div class="asset-preview" data-model="${escape(asset.modelUrl)}"><span>Rendering…</span></div>`:'<div class="asset-preview empty"><span>No model yet</span></div>'}</td>
-      <td><strong>${escape(asset.name)}</strong>${asset.model?`<small>${escape(asset.model)}<span class="asset-size" data-size-for="${escape(asset.modelUrl || '')}"></span></small>`:''}</td>
+      <td>${asset.modelUrl?`<div class="asset-preview" data-model="${escape(asset.modelUrl)}"><span>Rendering…</span></div>`
+        :asset.model?.startsWith('@')?`<div class="asset-preview" data-primitive="${i}"><span>Rendering…</span></div>`
+        :'<div class="asset-preview empty"><span>No model yet</span></div>'}</td>
+      <td><strong>${escape(asset.name)}</strong>${asset.model?`<small>${escape(asset.model)}${asset.dims?` · fitted to ${asset.dims.map(v=>v.toFixed(2)).join(' × ')} m`:`<span class="asset-size" data-size-for="${escape(asset.modelUrl || '')}"></span>`}</small>`:''}</td>
       <td><span class="asset-kind">${escape(asset.kind)}</span></td><td>${asset.qty}</td><td>${placedCount(asset)?`<span class="asset-placed${placedCount(asset)>=asset.qty?' done':''}">${placedCount(asset)} / ${asset.qty}</span>`:'<span class="asset-placed">—</span>'}</td>
       <td><div class="asset-photos">${asset.photos.map((src,j)=>`<button data-asset="${i}" data-asset-photo="${j}" aria-label="${escape(asset.name)} photo ${j+1}"><img src="${escape(src)}" alt="" loading="lazy"></button>`).join('')}</div></td>
       <td class="asset-notes">${escape(asset.notes)}</td></tr>`).join('')}
@@ -137,6 +140,11 @@ export function setupUI(home,target,onRoom) {
       cell.classList.add('empty');
       cell.innerHTML=`<span>${location.protocol==='file:'?'Use kit/home serve to preview':'Model failed to load'}</span>`;
     }));
+    target.querySelectorAll('[data-primitive]').forEach(cell=>{
+      const asset=home.inventory[Number(cell.dataset.primitive)];
+      previewObject(`${asset.model}|${asset.dims}|${asset.colour}`,async()=>buildPrimitive(asset.model.slice(1),asset.dims,asset.colour))
+        .then(({src})=>cell.innerHTML=`<img src="${src}" alt="">`);
+    });
   }
   target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get('tab-home3d').focus();});
   setTab(new URLSearchParams(location.search).get('tab'),false);

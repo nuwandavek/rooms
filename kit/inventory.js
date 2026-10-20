@@ -2,11 +2,15 @@
 //
 // Every markdown table with Asset and Room columns contributes rows:
 //
-//   | Asset | Room | Kind | Qty | Model | Photos | Notes |
+//   | Asset | Room | Kind | Qty | Dims | Colour | Model | Photos | Notes |
 //
-// Room is a room id or name from home.js. Model is an id from library/catalog.json,
-// optional. Photos are comma-separated image paths; a bare name such as `living-01`
-// means `assets/living-01.jpg`. Kind, Qty and Notes are free text (Qty defaults to 1).
+// Room is a room id or name from home.js. Dims is w×h×d in metres (estimated); placed
+// models are scaled to it. Colour is a hex hint (#rrggbb) that placed models are tinted
+// toward. Model is an id from library/catalog.json, or `@frame`-style primitive built
+// from Dims and Colour (kit/primitives.js); optional. Photos are comma-separated image
+// paths; a bare name such as `living-01` means `assets/living-01.jpg`. Kind and Notes
+// are free text; Qty defaults to 1.
+import {PRIMITIVES} from './primitives.js';
 const cells = line => line.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim().replace(/^`|`$/g,''));
 const photoPath = value => (value.includes('/') ? value : `assets/${value}`) + (/\.[a-z]+$/i.test(value) ? '' : '.jpg');
 
@@ -31,8 +35,15 @@ export function applyInventory(home,markdown) {
     if(!room)errors.push(`inventory.md row ${i+1} (${row.asset}): no room "${row.room}"`);
     const qty=row.qty ? Number(row.qty) : 1;
     if(!Number.isInteger(qty)||qty<1)errors.push(`inventory.md row ${i+1} (${row.asset}): Qty must be a whole number`);
-    if(row.model&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.model))errors.push(`inventory.md row ${i+1} (${row.asset}): Model must be a kebab-case library id`);
-    return {name:row.asset,room:room?.id,kind:row.kind || '',qty,model:row.model || null,
+    const label=`inventory.md row ${i+1} (${row.asset})`;
+    if(row.model?.startsWith('@')) {
+      if(!PRIMITIVES.includes(row.model.slice(1)))errors.push(`${label}: unknown primitive ${row.model}; use ${PRIMITIVES.map(p=>'@'+p).join(', ')}`);
+      if(!row.dims)errors.push(`${label}: primitive ${row.model} needs Dims`);
+    } else if(row.model&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(row.model))errors.push(`${label}: Model must be a kebab-case library id`);
+    const dims=row.dims ? row.dims.split(/\s*[×x]\s*/).map(Number) : null;
+    if(dims&&(dims.length!==3||!dims.every(v=>v>0)))errors.push(`${label}: Dims must be w×h×d in metres`);
+    if(row.colour&&!/^#[0-9a-f]{6}$/i.test(row.colour))errors.push(`${label}: Colour must be #rrggbb`);
+    return {name:row.asset,room:room?.id,kind:row.kind || '',qty,dims,colour:row.colour || null,model:row.model || null,
       photos:(row.photos || '').split(',').map(p=>p.trim()).filter(Boolean).map(photoPath),notes:row.notes || ''};
   });
   if(errors.length)throw new Error(errors.join('\n'));

@@ -39,10 +39,10 @@ export function upsertCatalog(json,entries) {
 
 // A first guess from the model's name; fix by hand in the catalog.
 const CATEGORIES=[
-  ['bed',/bed(?!-?side)|bunk/],['sofa',/sofa|couch|ottoman/],['seating',/chair|stool|bench/],
-  ['table',/table|desk|bar(?!-?stool)/],['storage',/bookcase|book-case|closet|cabinet|wardrobe|drawer|night-stand|shelf|coat-rack/],
   ['lighting',/lamp|light|chandelier|ceiling-fan/],['bath',/bath|toilet|shower|sink|basin/],
   ['kitchen',/kitchen|fridge|stove|hood|microwave|toaster|blender|coffee-machine/],
+  ['storage',/bookcase|book-case|closet|cabinet|wardrobe|drawer|night-stand|shelf|coat-rack/],
+  ['bed',/bed|bunk/],['sofa',/sofa|couch|ottoman/],['seating',/chair|stool|bench/],['table',/table|desk|bar/],
   ['appliance',/washer|dryer|television|computer|laptop|radio|speaker|keyboard|mouse/],
   ['decor',/plant|vase|pillow|rug|books|bear|frame|mirror|trashcan|box|curtain|painting/],
   ['architecture',/wall|floor|stair|door|window|paneling/],
