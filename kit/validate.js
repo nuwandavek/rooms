@@ -11,6 +11,7 @@ export function validateHome(home) {
   require(['riso','almanac','drafting'].includes(home?.theme || 'riso'),'theme must be riso, almanac or drafting');
   require(['day','night'].includes(home?.lighting || 'day'),'lighting must be day or night');
   require(home?.surroundings===undefined||['city','suburb'].includes(home.surroundings),'surroundings must be city or suburb');
+  require(home?.walkStart===undefined||(Array.isArray(home.walkStart)&&home.walkStart.length===4&&home.walkStart.every(Number.isFinite)),'walkStart must be [x, z, heading, pitch]');
   require(home?.storey===undefined||(Number.isInteger(home.storey)&&home.storey>=0&&home.storey<200),'storey must be a whole floor number');
   const photos=value=>Array.isArray(value)&&value.every(p=>typeof p==='string'&&p.length>0);
   require(home?.resources===undefined||Array.isArray(home.resources),'resources must be an array');

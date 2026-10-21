@@ -5,3 +5,4 @@ archive/
 projects/
 library/models
 library/textures/
+.env

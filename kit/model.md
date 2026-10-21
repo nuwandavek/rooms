@@ -9,7 +9,9 @@ Required: `title`. Optional: `brand`, `mark`, `subtitle`, `location`,
 `stats: [{value,unit,label}]`,
 `source: {label,url,note}`, `floorPlan: {image,alt,note}`,
 `resources: [{name,photos: [imagePath,...]}]` for additional photo groups,
-`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'day' | 'night'` (the starting light study).
+`theme: 'riso' | 'almanac' | 'drafting'`, `lighting: 'day' | 'night'` (the starting light study),
+`walkStart: [x, z, heading, pitch]` (where Walk mode opens, in plan metres and degrees; the
+same four numbers as a shared `?cam=` link).
 Text is plain text; use `\n` for a headline line break.
 
 Images are project-relative JPG, PNG or WebP paths, for example

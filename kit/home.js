@@ -123,7 +123,11 @@ export function mount(home, target=document.body) {
       if(mode==='walk')walk.enter(room);else move(new THREE.Vector3(room.center[0],0,room.center[1]),1.65);photo(room);
     } else {
       get('selection-info').innerHTML='<strong>The whole home</strong><span>Select a room to take a closer look.</span>';
-      if(mode==='walk')walk.enter(defaultPhoto);else move(center.clone());photo(defaultPhoto);
+      // Walk starts at the home's walkStart view ([x,z,heading,pitch], as in ?cam=) when it has one.
+      const start=home.walkStart?.map(Number);
+      if(mode==='walk')start?walk.place([start[0],start[1]],THREE.MathUtils.degToRad(start[2]),THREE.MathUtils.degToRad(start[3])):walk.enter(defaultPhoto);
+      else move(center.clone());
+      photo(defaultPhoto);
     }
   }
   focusRoom=select;

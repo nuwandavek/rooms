@@ -58,6 +58,18 @@ by relative path, so it works over `file://` without network access as long as i
 stays inside `projects/<name>/out/`. Re-run `open` after changing source files.
 WebGL is needed for the 3D view; the source plan remains available without it.
 
+## Host a home
+
+Homes are static sites, served at `https://rooms.isopolis.city/<project>/` from the shared
+`isopolis` S3 bucket (`rooms/` prefix) through CloudFront. Settings live in `.env`
+(gitignored; copy `.env.example`).
+
+```sh
+bash kit/hosting/setup.sh                 # once: CloudFront distribution + bucket grant; prints the DNS CNAME
+kit/home publish kalpataru-radiance       # stage projects/<name>/out/site (only the files it uses)
+kit/home deploy kalpataru-radiance        # publish, upload, invalidate; add --dry-run to preview
+```
+
 All examples run from the repository root. You can also run the absolute path
 to `kit/home` from any directory, or use `npm run home -- <command> <name>`.
 
