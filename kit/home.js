@@ -7,7 +7,7 @@ import {buildBuiltins} from './builtins.js';
 import {createRealistic} from './realistic.js';
 import { createShell, planShape } from './geometry.js';
 import { applyTheme } from './themes.js';
-import {createWalk,inside} from './walk.js';
+import {createWalk,inside,walkFov} from './walk.js';
 import {createTour} from './tour.js';
 
 import {escape,markup,setupUI,roomPhotos} from './ui.js';
@@ -342,7 +342,7 @@ export function mount(home, target=document.body) {
   function resize() {
     const {width,height}=host.getBoundingClientRect();if(!width || !height)return;
     renderer.setSize(width,height);realistic.setSize(width,height);invalidate();
-    walk.camera.aspect=width/height;walk.camera.updateProjectionMatrix();
+    walk.camera.aspect=width/height;walk.camera.fov=walkFov(width/height);walk.camera.updateProjectionMatrix();
     const aspect=width/height,half=Math.max(span*.63,span*.7/aspect);
     camera.left=-half*aspect;camera.right=half*aspect;camera.top=half;camera.bottom=-half;camera.updateProjectionMatrix();
   }

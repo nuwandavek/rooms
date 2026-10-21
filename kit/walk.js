@@ -1,6 +1,10 @@
 import {PerspectiveCamera,Euler,Vector3,Vector2,Plane,Raycaster,Group} from 'three';
 
 export const EYE_HEIGHT=1.65;
+// A wide lens, like a phone's 0.5× camera: 110° across, with the vertical angle capped so
+// tall (portrait) screens do not stretch the edges.
+export const WALK_FOV=110,WALK_MAX_VFOV=100;
+export const walkFov=aspect=>Math.min(WALK_MAX_VFOV,2*Math.atan(Math.tan(WALK_FOV*Math.PI/360)/aspect)*180/Math.PI);
 export function inside(point,polygon) {
   const [x,z]=point;let result=false;
   for(let i=0,j=polygon.length-1;i<polygon.length;j=i++) {
