@@ -1,8 +1,8 @@
 // Adds models to library/catalog.json from a JSON list written by import.py or a generator:
 //
 //   node library/tools/catalog.mjs add entries.json
-//   [{"id":"kenney-chair","path":"models/kenney-chair.glb","size":[0.4,0.94,0.4],
-//     "origin":"sourced","source":"Kenney Furniture Kit 2.0: chair.glb","licence":"CC0","tris":120}]
+//   [{"id":"cgt-chair-09","path":"models/catalog/cgt-chair-09.glb","size":[0.43,0.79,0.49],
+//     "origin":"sourced","source":"CGT Free Pack (Gumroad): FBX/CGT_Chair_009.fbx","licence":"CGTrader free pack (royalty free)","tris":2688}]
 //
 // `node library/tools/catalog.mjs check` reports rows whose file is missing and models
 // with no row.
@@ -12,12 +12,18 @@ import {fileURLToPath} from 'node:url';
 import {parseCatalog,upsertCatalog} from '../../kit/catalog.js';
 
 const library=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const file=resolve(library,'catalog.json');
+// Indoor models (what homes furnish with) live in catalog.json; Walk mode's city kits in
+// outside.json, chosen by the model's folder.
+const FILES=['catalog.json','outside.json'];
+const fileFor=entry=>entry.path.startsWith('models/outside/')?'outside.json':'catalog.json';
+const read=name=>readFile(resolve(library,name),'utf8').catch(e=>{if(e.code==='ENOENT')return '';throw e;});
 
 export async function addToCatalog(entries) {
-  const json=await readFile(file,'utf8').catch(e=>{if(e.code==='ENOENT')return '';throw e;});
   const round=v=>Math.round(v*1000)/1000;
-  await writeFile(file,upsertCatalog(json,entries.map(e=>({...e,size:e.size.map(round)}))));
+  for(const name of FILES) {
+    const mine=entries.filter(e=>fileFor(e)===name);
+    if(mine.length)await writeFile(resolve(library,name),upsertCatalog(await read(name),mine.map(e=>({...e,size:e.size.map(round)}))));
+  }
 }
 
 if(process.argv[1]===fileURLToPath(import.meta.url)) {
@@ -25,9 +31,9 @@ if(process.argv[1]===fileURLToPath(import.meta.url)) {
   if(command==='add') {
     const entries=JSON.parse(await readFile(arg,'utf8'));
     await addToCatalog(entries);
-    console.log(`library/catalog.json: ${entries.length} models added or refreshed`);
+    console.log(`library/${[...new Set(entries.map(fileFor))].join(', ')}: ${entries.length} models added or refreshed`);
   } else if(command==='check') {
-    const rows=parseCatalog(await readFile(file,'utf8'));
+    const rows=(await Promise.all(FILES.map(async name=>parseCatalog(await read(name))))).flat();
     const missing=[];
     for(const r of rows)await access(resolve(library,r.path)).catch(()=>missing.push(r.path));
     const listed=new Set(rows.map(r=>r.path));

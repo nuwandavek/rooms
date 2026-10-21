@@ -2,20 +2,20 @@
 // (gitignored). No browser required.
 //
 //   {"models": [
-//     {"id":"kenney-chair", "path":"models/catalog/kenney-chair.glb", "category":"seating",
-//      "size":[0.4,0.94,0.4], "origin":"sourced", "source":"Kenney Furniture Kit 2.0: chair.glb",
-//      "licence":"CC0", "tris":120, "materials":["wood"], "notes":""}
+//     {"id":"cgt-chair-09", "path":"models/catalog/cgt-chair-09.glb", "category":"seating",
+//      "size":[0.43,0.79,0.49], "origin":"sourced", "source":"CGT Free Pack (Gumroad): FBX/CGT_Chair_009.fbx",
+//      "licence":"CGTrader free pack (royalty free)", "tris":2688, "materials":["fabric"], "notes":""}
 //   ]}
 //
 // path is relative to library/. size is [w,h,d] in metres, as measured on import.
 // origin is sourced (a downloaded model as is), modified (an edit of another id; notes
-// say which) or generated (built by code in library/generators/).
+// say which) or generated (built by code).
 export const FIELDS=['id','path','category','size','origin','source','licence','tris','materials','notes'];
 
 export function parseCatalog(json) {
   if(!json.trim())return [];
   const data=JSON.parse(json);
-  if(!Array.isArray(data?.models))throw new Error('library/catalog.json: expected {"models": [...]}');
+  if(!Array.isArray(data?.models))throw new Error('catalog: expected {"models": [...]}');
   return data.models;
 }
 

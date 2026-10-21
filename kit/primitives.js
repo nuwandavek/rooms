@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
 // Simple items built at load time from an inventory row's Dims and Colour, with no
-// library file: write `@frame`, `@mirror`, `@mirror-arch`, `@rug`, `@curtain`, `@glass` or `@box`
-// in the Model column. Like library models they rest on y = 0, are centered on x/z,
+// library file: write `@frame`, `@mirror`, `@mirror-arch`, `@rug`, `@curtain`, `@glass`, `@box`,
+// `@basin` (a round or oval vessel basin, by Dims), `@basin-rect` or `@tap` in the Model column. Like library models they rest on y = 0, are centered on x/z,
 // and face +z; the size is exactly w×h×d. Wall-hung items are placed with a `y` height.
-export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain','glass'];
+export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain','glass','basin','basin-rect','tap'];
 
 const material=(colour,extra={})=>new THREE.MeshStandardMaterial({color:colour,roughness:.8,metalness:0,...extra});
 function slab(group,[w,h,d],[x,y,z],mat) {
@@ -27,6 +27,27 @@ function artMaterial(url) {
   return material('#ffffff',{map:textures.get(url),roughness:.85});
 }
 
+// A vessel basin turned from a wall profile (radius, height on a unit bowl): a narrow foot,
+// a flared wall, a thin rim and a hollow inside down to a drain. Four sides make it
+// rectangular; scaled to w×h×d.
+const BASIN=[[0,0],[.55,0],[.62,.03],[.85,.35],[.97,.75],[1,1],[.955,1],[.925,.78],[.82,.42],[.6,.14],[0,.1]];
+function basin(group,[w,h,d],colour,sides) {
+  const square=sides===4,k=square?Math.SQRT2:1;  // a 4-sided lathe's corners sit at radius 1
+  const geometry=new THREE.LatheGeometry(BASIN.map(([r,y])=>new THREE.Vector2(r*k,y)),sides,square?Math.PI/4:0);
+  geometry.scale(w/2,h,d/2);
+  const ceramic=material(colour || '#f7f7f5',{roughness:.12,flatShading:square});
+  group.add(new THREE.Mesh(square?geometry.toNonIndexed():geometry,ceramic));
+  const drain=new THREE.Mesh(new THREE.CircleGeometry(Math.min(w,d)*.06,24),material('#b9bcbf',{roughness:.2,metalness:.9}));
+  drain.rotation.x=-Math.PI/2;drain.position.y=h*.1+.002;group.add(drain);
+}
+// A chrome basin tap: a column at the back rising to h, an arm reaching d forward, a nozzle.
+function tap(group,[w,h,d],colour) {
+  const chrome=material(colour || '#d9dcdf',{roughness:.12,metalness:1}),r=w/2;
+  const column=new THREE.Mesh(new THREE.CylinderGeometry(r*.8,r,h-r,24),chrome);column.position.set(0,(h-r)/2,-d/2+r);group.add(column);
+  const arm=new THREE.Mesh(new THREE.CylinderGeometry(r*.55,r*.55,d-r,20),chrome);arm.rotation.x=Math.PI/2;arm.position.set(0,h-r*.8,r/2);group.add(arm);
+  const nozzle=new THREE.Mesh(new THREE.CylinderGeometry(r*.5,r*.5,r*1.4,20),chrome);nozzle.position.set(0,h-r*1.4,d/2-r*.55);group.add(nozzle);
+}
+
 // `art` is an image (a print cropped from the listing photos) shown inside a @frame.
 export function buildPrimitive(name,[w,h,d],colour,art=null) {
   const group=new THREE.Group();
@@ -44,6 +65,9 @@ export function buildPrimitive(name,[w,h,d],colour,art=null) {
     const pane=new THREE.Mesh(extrude(shape(Math.min(.03,w/8)),d*.4),glass);pane.position.z=-d*.2;group.add(pane);
     pane.userData.mirrorFace={geometry:()=>new THREE.ShapeGeometry(shape(Math.min(.03,w/8)),24),position:[0,0,.001]};
   }
+  else if(name==='basin')basin(group,[w,h,d],colour,48);
+  else if(name==='basin-rect')basin(group,[w,h,d],colour,4);
+  else if(name==='tap')tap(group,[w,h,d],colour);
   else if(name==='glass')slab(group,[w,h,d],[0,0,0],material(colour || '#dfeef0',{roughness:.05,transparent:true,opacity:.28,depthWrite:false}));
   else if(name==='rug')slab(group,[w,h,d],[0,0,0],material(colour || '#9a9a96',{roughness:1}));
   else if(name==='curtain') {
