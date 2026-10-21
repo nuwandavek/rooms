@@ -34,9 +34,17 @@ export function applyPlacements(home,json) {
     if(p?.y!==undefined&&!(Number.isFinite(p.y)&&p.y>=0))errors.push(`${label}: y must be a height in metres`);
     if(p?.asset!==undefined&&!row)errors.push(`${label}: no inventory row "${p.asset}" in ${p.room}`);
     if(p?.art!==undefined&&(typeof p.art!=='string'||model!=='@frame'))errors.push(`${label}: art must be an image path, on a @frame`);
+    if(p?.light!==undefined) {
+      const l=p.light;
+      if(!l||!Array.isArray(l.offset)||l.offset.length!==3||!l.offset.every(Number.isFinite))errors.push(`${label}: light.offset must be [x,y,z] metres from the model base`);
+      if(l?.colour!==undefined&&!/^#[0-9a-f]{6}$/i.test(l.colour))errors.push(`${label}: light.colour must be a hex colour`);
+      for(const key of ['intensity','radius'])if(l?.[key]!==undefined&&!(Number.isFinite(l[key])&&l[key]>0))errors.push(`${label}: light.${key} must be positive`);
+      if(l?.dayFactor!==undefined&&!(Number.isFinite(l.dayFactor)&&l.dayFactor>=0))errors.push(`${label}: light.dayFactor must be nonnegative`);
+      if(l?.bulbMaterial!==undefined&&typeof l.bulbMaterial!=='string')errors.push(`${label}: light.bulbMaterial must be a material name`);
+    }
     if(model==='@fitout')errors.push(`${label}: "${p.asset}" is built by fitout.json; do not place it`);
     return {model,room:p?.room,at:p?.at,rotation:p?.rotation ?? 0,y:p?.y ?? 0,
-      ...(p?.asset?{asset:p.asset}:{}),...(p?.art?{art:p.art}:{}),...(row?.dims?{dims:row.dims}:{}),...(row?.colour?{colour:row.colour}:{}),...(row?.realistic?{realistic:row.realistic}:{})};
+      ...(p?.asset?{asset:p.asset}:{}),...(p?.art?{art:p.art}:{}),...(p?.light?{light:p.light}:{}),...(row?.dims?{dims:row.dims}:{}),...(row?.colour?{colour:row.colour}:{}),...(row?.realistic?{realistic:row.realistic}:{})};
   });
   for(const row of home.inventory || []) {
     const count=placements.filter(p=>p.asset===row.name&&p.room===row.room).length;

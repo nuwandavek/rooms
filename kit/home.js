@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { createSurroundings } from './surroundings.js';
 import {buildPrimitive,fitModel} from './primitives.js';
 import {buildBuiltins} from './builtins.js';
 import {createRealistic} from './realistic.js';
+import {createBakedEnvironment} from './baked-environment.js';
 import { createShell, planShape } from './geometry.js';
 import { applyTheme } from './themes.js';
 import {createWalk,inside,walkFov} from './walk.js';
@@ -17,13 +19,19 @@ export function mount(home, target=document.body) {
   document.title = home.title;
   target.innerHTML = markup(home);
   const get=id=>target.querySelector(`#${id}`);
+  const loading={assets:false,furniture:true,photos:false,bake:false,bakeFailed:false};
+  let refreshLoading=()=>{};
   let focusRoom=()=>{};
   // Frames are drawn only when something changed: camera moves are detected per frame,
   // everything else calls invalidate().
   let dirty=true;
   // invalidate() redraws; pass true when something that casts shadows changed.
   const invalidate=(shadows=false)=>{dirty=true;if(shadows&&renderer)renderer.shadowMap.needsUpdate=true;};
-  THREE.DefaultLoadingManager.onProgress=()=>invalidate(true);
+  const loadingManager=THREE.DefaultLoadingManager;
+  const previousLoading={onStart:loadingManager.onStart,onProgress:loadingManager.onProgress,onLoad:loadingManager.onLoad};
+  loadingManager.onStart=()=>{loading.assets=true;refreshLoading();};
+  loadingManager.onProgress=()=>invalidate(true);
+  loadingManager.onLoad=()=>{loading.assets=false;refreshLoading();invalidate(true);};
   // A 3D tab in the URL selects its stage before the furniture group exists.
   let furnitureBuilt=false;
   const ui=setupUI(home,target,id=>focusRoom(id),()=>furnitureBuilt&&applyStage());
@@ -36,6 +44,7 @@ export function mount(home, target=document.body) {
   let renderer;
   try {renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});}
   catch(error) {
+    get('scene-loading').hidden=true;Object.assign(loadingManager,previousLoading);
     get('error').hidden=false;
     get('error').textContent='The 3D view needs WebGL. Enable hardware acceleration and reload. The floor plan and photographs are available in Resources.';
     return {error,setTab:ui.setTab};
@@ -180,7 +189,7 @@ export function mount(home, target=document.body) {
     if(touring&&value==='orbit')setTouring(false);
     const startTour=value==='tour';if(startTour)value='walk';
     mode=value;transition=null;controls.enabled=mode!=='walk';
-    ceiling.visible=mode==='walk';updateBackdrop();invalidate();
+    ceiling.visible=mode==='walk'&&!usesBakedInterior();updateBakedCeiling();updateBackdrop();invalidate();
     walk.setActive(mode==='walk');
     get('labels').hidden=mode==='walk'||!get('labels-toggle').checked;
     get('labels-toggle').disabled=mode==='walk';
@@ -188,7 +197,9 @@ export function mount(home, target=document.body) {
     get('full-height').disabled=mode==='walk';
     get('navigation-help').textContent=mode==='walk'?'Click the floor to walk · Drag to look · WASD / arrows to move · Q E to turn · Scroll to step':'Drag to orbit · Scroll to zoom · Right-drag to pan';
     target.querySelector('.viewport').classList.toggle('walking',mode==='walk');
-    updateHeight();select(selected);
+    updateHeight();
+    if(ui.stage==='baked')applyStage();
+    select(selected);
     if(startTour)setTouring(true);else updateModeButtons();
   }
   function updateModeButtons() {
@@ -231,13 +242,15 @@ export function mount(home, target=document.body) {
   // Day: the theme's soft daylight. Night: faint cool moonlight, a dark sky, lamps on.
   let lighting='day';
   function setLighting(value) {
+    if(usesBakedInterior()&&!home.baked.modes.night)value='day';
     lighting=value==='night'?'night':'day';const night=lighting==='night';
     sun.position.copy(center).add(new THREE.Vector3(...(night?[.5,1.4,-.4]:light.position.map(v=>v/14))).multiplyScalar(span));
     sun.color.set(night?'#9fb3ff':light.sun);sun.intensity=night?.25:light.intensity;
     ambient.color.set(night?'#3a4766':light.sky);ambient.groundColor.set(night?'#1c1d24':light.bounce);
     ambient.intensity=night?.7:light.ambient;fill.intensity=night?.05:.7;
     get('light-day').setAttribute('aria-pressed',String(!night));get('light-night').setAttribute('aria-pressed',String(night));
-    realistic.setNight(night);realistic.relight();updateBackdrop();invalidate(true);
+    realistic.setNight(night);realistic.relight();realistic.pads.visible=realistic.on&&!usesBakedInterior();updateBackdrop();invalidate(true);
+    updateBakedLighting();
   }
   get('orbit-button').onclick=()=>setMode('orbit');
   // Camera presets move the camera once; room focus reuses the last one. Reset also clears the room.
@@ -268,6 +281,21 @@ export function mount(home, target=document.body) {
   const furniture=new THREE.Group();furniture.name='Furniture';scene.add(furniture);
   furniture.position.y=.016;  // Room floors sit at 0.015 (geometry.js); stand on them.
   const loader=new GLTFLoader(),sources=new Map();
+  function prepareBulb(object,placement) {
+    if(!placement.light?.bulbMaterial)return;
+    object.traverse(o=>{
+      if(!o.isMesh)return;
+      const materials=[o.material].flat();
+      if(!materials.some(m=>m.name===placement.light.bulbMaterial))return;
+      const updated=materials.map(m=>{
+        if(m.name!==placement.light.bulbMaterial)return m;
+        const bulb=m.clone();bulb.metalness=0;bulb.roughness=.35;
+        bulb.emissive.set(placement.light.colour || '#ffe2b5');bulb.emissiveIntensity=1.5;
+        return bulb;
+      });
+      o.material=Array.isArray(o.material)?updated:updated[0];o.userData.bakeEmitter=true;
+    });
+  }
   const furnitureReady=Promise.allSettled((home.placements || []).map(async placement=>{
     let object;
     if(placement.model.startsWith('@'))object=buildPrimitive(placement.model.slice(1),placement.dims,placement.colour,placement.art);
@@ -277,22 +305,30 @@ export function mount(home, target=document.body) {
     }
     object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
     object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
+    prepareBulb(object,placement);
     object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
-    object.userData.placement=placement;furniture.add(object);updateFurniture();realistic.addMirrors();
-  })).then(results=>results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason)));
+    object.userData.placement=placement;furniture.add(object);
+    // Primitives finish synchronously, before photoFurniture and baked exist.
+    if(furnitureBuilt){updateFurniture();realistic.addMirrors();}
+  })).then(results=>{
+    results.filter(r=>r.status==='rejected').forEach(r=>console.warn('Furniture model failed to load',r.reason));
+    loading.furniture=false;refreshLoading();
+  });
   // Realistic-tab models (inventory Realistic column) load the first time that tab opens.
   const photoFurniture=new THREE.Group();photoFurniture.name='Furniture (realistic)';
   photoFurniture.position.y=furniture.position.y;scene.add(photoFurniture);
   let photoLoading=null;
   function loadPhotoFurniture() {
+    if(!photoLoading){loading.photos=true;refreshLoading();}
     photoLoading??=Promise.allSettled((home.placements || []).filter(p=>p.realisticUrl).map(async placement=>{
       if(!sources.has(placement.realisticUrl))sources.set(placement.realisticUrl,loader.loadAsync(placement.realisticUrl));
       const object=fitModel((await sources.get(placement.realisticUrl)).scene.clone(true),placement.dims,placement.colour);
       object.position.set(placement.at[0],placement.y || 0,placement.at[1]);
       object.rotation.y=THREE.MathUtils.degToRad(placement.rotation);
+      prepareBulb(object,placement);
       object.traverse(o=>{if(o.isMesh)o.castShadow=o.receiveShadow=true;});
       object.userData.placement=placement;photoFurniture.add(object);updateFurniture();
-    }));
+    })).then(results=>{loading.photos=false;refreshLoading();return results;});
     return photoLoading;
   }
   furnitureBuilt=true;
@@ -301,13 +337,92 @@ export function mount(home, target=document.body) {
   const photoBuiltins=buildBuiltins(home.fitout || {},true);photoBuiltins.position.y=furniture.position.y;scene.add(photoBuiltins);
   // Tab 6: the furnished home with realistic lighting, materials and post-processing.
   const realistic=createRealistic({renderer,scene,home,lights:{ambient,sun,fill}});
+  // Tab 7: 3D Tour with the architecture (walls, floors, ceiling, built-ins) swapped for
+  // Blender's baked version (kit/home bake). Its diffuse light is the lightmap: sun, sky and
+  // lamps, bounced and shadowed by the furniture. Reflections and highlights stay live, and
+  // the furniture is drawn as in 3D Tour.
+  const baked=new THREE.Group();baked.name='Baked interior';baked.visible=false;scene.add(baked);
+  const bakedEnvironment=createBakedEnvironment({renderer,scene,home,furniture:[furniture,photoFurniture],architecture:baked});
+  let bakedLoading=null;
+  let environmentMode=null;
+  const bakedMaps=new Map();
+  function bakeMaterial(material,variant) {
+    material.lightMap=variant.texture;material.lightMapIntensity=variant.scale;
+    material.onBeforeCompile=shader=>{
+      shader.fragmentShader=shader.fragmentShader.replace('#include <aomap_fragment>',`#include <aomap_fragment>
+        reflectedLight.directDiffuse=vec3(0.0);
+        reflectedLight.indirectDiffuse=material.diffuseColor*texture2D(lightMap,vLightMapUv).rgb*lightMapIntensity;`);
+    };
+    material.customProgramCacheKey=()=>'baked-lightmap';material.needsUpdate=true;
+  }
+  function updateBakedLighting() {
+    const variant=bakedMaps.get(lighting) || bakedMaps.get('day');
+    if(!variant)return;
+    baked.traverse(o=>{if(o.isMesh&&o.geometry.attributes.uv1){
+      o.material.lightMap=variant.texture;o.material.lightMapIntensity=variant.scale;
+    }});
+    if(usesBakedInterior()&&baked.children.length) {
+      ambient.intensity=0;fill.intensity=0;sun.color.set('#fffaf2');sun.intensity=lighting==='night'?0:3;
+      for(const lamp of realistic.lamps.children)lamp.intensity=lamp.userData.base*(lighting==='night'?3:(lamp.userData.dayFactor ?? .18));
+      if(environmentMode!==lighting) {
+        bakedEnvironment.enable(lighting);environmentMode=lighting;
+      }
+    }
+    invalidate();
+  }
+  function loadBaked() {
+    if(!bakedLoading){loading.bake=true;refreshLoading();}
+    bakedLoading??=Promise.all([loader.loadAsync(home.baked.scene),Promise.all(Object.entries(home.baked.modes).map(async([mode,v])=>{
+      const hdr=v.lightmap.endsWith('.exr');
+      const texture=await (hdr?new EXRLoader():new THREE.TextureLoader()).loadAsync(v.lightmap);
+      // EXRLoader returns bottom-up float pixels; browser images are top-down.
+      texture.flipY=hdr;texture.colorSpace=hdr?THREE.LinearSRGBColorSpace:THREE.SRGBColorSpace;texture.channel=1;
+      texture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+      bakedMaps.set(mode,{texture,scale:v.scale});
+    }))]).then(async([gltf])=>{
+      await furnitureReady;await loadPhotoFurniture();
+      const variant=bakedMaps.get(lighting) || bakedMaps.get('day');
+      gltf.scene.traverse(o=>{
+        if(!o.isMesh)return;
+        o.receiveShadow=false;o.castShadow=true;
+        if(o.geometry.attributes.uv1)bakeMaterial(o.material,variant);
+        o.userData.ceiling=o.material.name==='Ceiling';
+      });
+      baked.add(gltf.scene);updateBakedCeiling();updateBakedLighting();invalidate(true);
+    }).catch(error=>{loading.bakeFailed=true;console.warn('Baked interior failed to load',error);})
+      .finally(()=>{loading.bake=false;refreshLoading();});
+    return bakedLoading;
+  }
+  // The baked ceiling closes the rooms in Walk; from above it would hide them.
+  function updateBakedCeiling() {baked.traverse(o=>{if(o.userData.ceiling)o.visible=mode==='walk';});}
+  // Both tour tabs share the same cutaway overview. The full-height baked shell
+  // and its indoor lighting are used only by Free Walk and Guided Tour.
+  function usesBakedInterior() {return ui.stage==='baked'&&!!home.baked&&mode==='walk';}
+  function updateLoading() {
+    const isBaked=usesBakedInterior(),photo=ui.stage==='realistic'||ui.stage==='baked';
+    const failed=ui.in3d&&isBaked&&loading.bakeFailed;
+    const pending=ui.in3d&&(loading.assets||(ui.stage!=='shell'&&loading.furniture)||(photo&&loading.photos)||(isBaked&&loading.bake));
+    get('scene-loading').hidden=!(pending||failed);
+    get('scene-loading').classList.toggle('load-failed',failed);
+    get('scene-loading-label').textContent=failed?'Improved lighting couldn’t load.':isBaked?'Loading improved lighting…':'Loading your home…';
+    get('loading-fallback').hidden=!failed;
+    target.querySelector('.viewport').setAttribute('aria-busy',String(pending&&!failed));
+  }
+  refreshLoading=updateLoading;
+  get('loading-fallback').onclick=()=>ui.setTab('realistic');
   function applyStage() {
-    const photo=ui.stage==='realistic';
+    const isBaked=usesBakedInterior(),photo=ui.stage==='realistic'||ui.stage==='baked';
+    get('light-night').disabled=isBaked&&!home.baked.modes.night;
     if(photo)loadPhotoFurniture();
+    if(isBaked)loadBaked();
     invalidate(true);
     shell.setFinishes(ui.stage==='shell'?null:home.fitout || null,photo);
     realistic.enable(photo);
-    updateFurniture();
+    realistic.setBaked(isBaked);
+    if(!isBaked){bakedEnvironment.disable();environmentMode=null;}
+    // The bake has real contact shadows, so the soft pads under furniture step aside.
+    baked.visible=isBaked;shell.root.visible=!isBaked;ceiling.visible=mode==='walk'&&!isBaked;realistic.pads.visible=photo&&!isBaked;
+    updateFurniture();setLighting(lighting);updateLoading();
   }
   applyStage();
   // Shell shows no items, Fit-out adds built-in fixtures, Furnished adds everything.
@@ -318,12 +433,13 @@ export function mount(home, target=document.body) {
     for(const object of furniture.children) {
       const placement=object.userData.placement;
       const kind=(home.inventory || []).find(a=>a.name===placement.asset&&a.room===placement.room)?.kind;
-      const staged=ui.stage==='furnished'||ui.stage==='realistic'||(ui.stage==='fitout'&&kind==='fixture');
-      object.visible=staged&&(placement.y || 0)<height&&!(ui.stage==='realistic'&&placement.realisticUrl);
+      const photo=ui.stage==='realistic'||ui.stage==='baked';
+      const staged=ui.stage==='furnished'||photo||(ui.stage==='fitout'&&kind==='fixture');
+      object.visible=staged&&(placement.y || 0)<height&&!(photo&&placement.realisticUrl);
     }
-    for(const object of photoFurniture.children)object.visible=ui.stage==='realistic'&&(object.userData.placement.y || 0)<height;
+    for(const object of photoFurniture.children)object.visible=(ui.stage==='realistic'||ui.stage==='baked')&&(object.userData.placement.y || 0)<height;
     // Built-ins belong to Fit-out; wall cabinets above the cut hide with the wall.
-    builtins.visible=ui.stage==='fitout'||ui.stage==='furnished';photoBuiltins.visible=ui.stage==='realistic';
+    builtins.visible=ui.stage==='fitout'||ui.stage==='furnished';photoBuiltins.visible=(ui.stage==='realistic'||ui.stage==='baked')&&!usesBakedInterior();
     for(const group of [builtins,photoBuiltins])group.traverse(o=>{if(o.isMesh)o.visible=o.userData.bottom<height;});
   }
   get('wall-height').oninput=updateHeight;
@@ -395,6 +511,7 @@ export function mount(home, target=document.body) {
     const moved=!lastView.equals(view.matrixWorld)||!lastProjection.equals(view.projectionMatrix);
     if(!dirty&&!moved)return;
     dirty=false;lastView.copy(view.matrixWorld);lastProjection.copy(view.projectionMatrix);
+    if(usesBakedInterior())bakedEnvironment.focus(view.position,walkRoom);
     if(realistic.on)realistic.render(view);else renderer.render(scene,view);
   }
   updateHeight();setLighting(home.lighting || 'day');select(null);frame=requestAnimationFrame(render);
@@ -406,8 +523,29 @@ export function mount(home, target=document.body) {
     const cam=(params.get('cam') || '').split(',').map(Number);
     if(cam.length===4&&cam.every(Number.isFinite))walk.place([cam[0],cam[1]],THREE.MathUtils.degToRad(cam[2]),THREE.MathUtils.degToRad(cam[3]));
   }
+  // kit/home bake: the interior exactly as the 3D Tour tab builds it (full-height walls,
+  // ceiling, realistic finishes and furniture), as GLB for Blender, plus the lamp lights.
+  // Architecture (shell, built-ins, ceiling) is tagged `bake` in its glTF extras: only it
+  // gets a lightmap; furniture stays for shadows and bounce. The city, sky, ground, lights,
+  // contact-shadow pads and mirror reflectors stay out; Blender relights it.
+  async function exportBake() {
+    const {GLTFExporter}=await import('three/addons/exporters/GLTFExporter.js');
+    ui.setTab('realistic');setMode('walk');
+    await furnitureReady;await loadPhotoFurniture();updateFurniture();
+    const hide=[surroundings.group,ground,roof,grid,realistic.pads,realistic.lamps,sun,sun.target,ambient,fill].filter(Boolean);
+    scene.traverse(o=>{if(o.isReflector||o.isPoints||o.isLine||o.material?.isShaderMaterial)hide.push(o);});
+    const was=hide.map(o=>o.visible);hide.forEach(o=>o.visible=false);
+    ceiling.visible=true;ceiling.name=ceiling.material.name='Ceiling';
+    const tagged=[];
+    for(const group of [shell.root,photoBuiltins,ceiling])group.traverse(o=>{if(o.isMesh){o.userData.bake=true;tagged.push(o);}});
+    const lamps=realistic.lamps.children.map(l=>({position:l.getWorldPosition(new THREE.Vector3()).toArray(),color:'#'+l.color.getHexString(),intensity:l.userData.base,radius:l.userData.radius,dayFactor:l.userData.dayFactor,distance:l.distance}));
+    try {
+      const glb=await new GLTFExporter().parseAsync(scene,{binary:true,onlyVisible:true,maxTextureSize:2048});
+      return {glb,light:theme.light,lighting:home.lighting || 'day',lamps};
+    } finally {hide.forEach((o,i)=>o.visible=was[i]);tagged.forEach(o=>delete o.userData.bake);updateBackdrop();}
+  }
   document.body.dataset.modelReady='true';
-  return {select,setMode,setLighting,setTab:ui.setTab,scene,furniture,photoFurniture,loadPhotoFurniture,builtins,realistic,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
-    dispose(){cancelAnimationFrame(frame);observer.disconnect();walk.dispose();controls.dispose();shell.dispose();ground.geometry.dispose();ground.material.dispose();grid?.geometry.dispose();grid?.material.dispose();renderer.dispose();target.replaceChildren();delete document.body.dataset.modelReady;},
+  return {exportBake,select,setMode,setLighting,setTab:ui.setTab,scene,furniture,photoFurniture,loadPhotoFurniture,builtins,realistic,furnitureReady,get camera(){return mode==='walk'?walk.camera:camera;},
+    dispose(){refreshLoading=()=>{};Object.assign(loadingManager,previousLoading);cancelAnimationFrame(frame);observer.disconnect();walk.dispose();controls.dispose();bakedEnvironment.dispose();for(const v of bakedMaps.values())v.texture.dispose();shell.dispose();ground.geometry.dispose();ground.material.dispose();grid?.geometry.dispose();grid?.material.dispose();renderer.dispose();target.replaceChildren();delete document.body.dataset.modelReady;},
   };
 }

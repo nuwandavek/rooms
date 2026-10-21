@@ -4,7 +4,7 @@ import * as THREE from 'three';
 // library file: write `@frame`, `@mirror`, `@mirror-arch`, `@rug`, `@curtain`, `@glass`, `@box`,
 // `@basin` (a round or oval vessel basin, by Dims), `@basin-rect` or `@tap` in the Model column. Like library models they rest on y = 0, are centered on x/z,
 // and face +z; the size is exactly w×h×d. Wall-hung items are placed with a `y` height.
-export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain','glass','basin','basin-rect','tap'];
+export const PRIMITIVES=['box','frame','mirror','mirror-arch','rug','curtain','glass','basin','basin-rect','tap','ceiling-light'];
 
 const material=(colour,extra={})=>new THREE.MeshStandardMaterial({color:colour,roughness:.8,metalness:0,...extra});
 function slab(group,[w,h,d],[x,y,z],mat) {
@@ -53,6 +53,15 @@ export function buildPrimitive(name,[w,h,d],colour,art=null) {
   const group=new THREE.Group();
   const glass=material('#cfdade',{roughness:.08,metalness:.85});
   if(name==='box')slab(group,[w,h,d],[0,0,0],material(colour || '#e6e1d8'));
+  else if(name==='ceiling-light') {
+    const housing=new THREE.Mesh(new THREE.CylinderGeometry(w/2,w/2,h,48),material(colour || '#f5f5f2',{roughness:.5}));
+    housing.scale.z=d/w;housing.position.y=h/2;group.add(housing);
+    const diffuserMaterial=material('#ffffff',{emissive:'#fff3dd',emissiveIntensity:1.5,roughness:.8});
+    diffuserMaterial.name='Ceiling diffuser';
+    const diffuser=new THREE.Mesh(new THREE.CircleGeometry(w*.44,48),diffuserMaterial);
+    diffuser.rotation.x=Math.PI/2;diffuser.scale.y=d/w;diffuser.position.y=-.001;
+    diffuser.userData.bakeEmitter=true;group.add(diffuser);
+  }
   else if(name==='frame')framed(group,[w,h,d],material(colour || '#1f1f1f'),art?artMaterial(art):material('#ece4d8')).userData.mirrorFace=null;
   else if(name==='mirror')framed(group,[w,h,d],material(colour || '#1f1f1f'),glass);
   else if(name==='mirror-arch') {

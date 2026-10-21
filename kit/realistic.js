@@ -11,7 +11,7 @@ import {Reflector} from 'three/addons/objects/Reflector.js';
 // mapping, ambient occlusion, antialiasing, contact shadows and lamps that emit.
 // Everything here is switched on only while that tab shows, so authoring tabs stay fast.
 export function createRealistic({renderer,scene,home,lights,furniture}) {
-  let on=false,night=false,environment=null,size=[1,1];
+  let on=false,night=false,baked=false,environment=null,size=[1,1];
   const composers=new Map();  // One per camera: GTAO is built for one projection type.
   const saved={};
 
@@ -30,8 +30,11 @@ export function createRealistic({renderer,scene,home,lights,furniture}) {
   for(const p of home.placements || []) {
     const [w,h,d]=p.dims || [0,0,0];
     if(kindOf(p)==='lighting'&&!/sconce/i.test(p.asset)) {
-      const light=new THREE.PointLight(0xffd6a0,p.y>1.5?2.2:1.4,4.5,2);light.userData.base=light.intensity;
-      light.position.set(p.at[0],(p.y || 0)+h*.8+.016,p.at[1]);lamps.add(light);
+      const light=new THREE.PointLight(p.light?.colour || 0xffd6a0,p.light?.intensity ?? (p.y>1.5?2.2:1.4),4.5,2);
+      light.userData.base=light.intensity;light.userData.radius=p.light?.radius ?? .08;
+      light.userData.dayFactor=p.light?.dayFactor;
+      light.position.fromArray(p.light?.offset || [0,h*.8,0]).applyAxisAngle(new THREE.Vector3(0,1,0),THREE.MathUtils.degToRad(p.rotation || 0));
+      light.position.add(new THREE.Vector3(p.at[0],(p.y || 0)+.016,p.at[1]));lamps.add(light);
     }
     if(!(p.y>.05)&&w&&d&&!/^@(rug|curtain|glass)$/.test(p.model)) {
       const pad=new THREE.Mesh(new THREE.PlaneGeometry(w*1.25,d*1.25),padMaterial);
@@ -70,7 +73,7 @@ export function createRealistic({renderer,scene,home,lights,furniture}) {
     // Metre-scale room: occlusion reaches about half a metre.
     ao.updateGtaoMaterial({radius:.3,distanceExponent:1,thickness:1,scale:1,samples:12});
     ao.updatePdMaterial({lumaPhi:10,depthPhi:4,normalPhi:5,radius:10,rings:2,samples:12});
-    ao.blendIntensity=.75;
+    ao.blendIntensity=baked?.15:.75;
     c.addPass(ao);
     c.addPass(new SMAAPass());
     c.addPass(new OutputPass());
@@ -104,6 +107,7 @@ export function createRealistic({renderer,scene,home,lights,furniture}) {
   }
   return {
     get on(){return on;},enable,pads,lamps,
+    setBaked(value){baked=value;for(const c of composers.values())for(const pass of c.passes)if(pass instanceof GTAOPass)pass.blendIntensity=baked?.15:.75;},
     render(camera){frameId++;composer(camera).render();},
     addMirrors(){if(on){addMirrors();}},
     setSize(width,height){size=[width,height];for(const c of composers.values())c.setSize(width,height);},

@@ -66,6 +66,21 @@ Positions outside the room polygon and more instances than the row's Qty are bui
 errors. Items whose `y` is above the wall cutaway are hidden with the wall. Furniture
 does not yet block Walk mode.
 
+Lighting placements may specify `light: {offset:[x,y,z], radius, colour,
+intensity, dayFactor, bulbMaterial}`. `offset` is in metres from the fitted model's base and
+rotates with the placement; use it to put a pendant's emitter inside its bulb.
+`radius` is the emitter radius in metres, `colour` is a hex colour, and `intensity`
+is the viewer's artistic light strength. `bulbMaterial` names the library material
+to make emissive and nonmetallic. The same position and colour are exported to
+Blender. Without an anchor, lights retain the estimated position near the top of
+their model. `dayFactor` overrides the bake's daytime lamp multiplier: use `1` for
+bathroom/task lights that stay on during the day. `@ceiling-light` builds a shallow
+round fixture with a downward-facing diffuser named `Ceiling diffuser`.
+
+For Baked mode, optional top-level `environmentProbes: [{room, at:[x,z]}]` in
+`home.js` adds local reflection probes to the default probe at each featured room
+center. Use an extra probe for a room with a long corridor or an alcove.
+
 ## tour.json
 
 Optional. Plans **Guided Tour** (kit/tour.js); without it the tour visits every

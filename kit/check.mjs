@@ -38,6 +38,8 @@ export async function checkProject(name) {
     assert.equal(await page.evaluate(()=>window.home3d.furniture.children.length),(home.placements || []).length,'Every placement loads its model');
     assert.equal(await page.title(),home.title);
     assert.equal(await page.locator('#room-list button').count(),home.model.rooms.filter(r=>r.featured).length);
+    assert.equal(await page.locator(`#tab-${home.baked?'baked':'realistic'}`).getAttribute('aria-selected'),'true','Open the best available tour by default');
+    await page.locator('#tab-resources').click();
     assert.equal(await page.locator('#panel-resources').isVisible(),true);
     // Decode even off-screen gallery images to check the full local asset set.
     await page.locator('img[src]').evaluateAll(imgs=>Promise.all(imgs.map(img=>{img.loading='eager';return img.decode();})));

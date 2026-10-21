@@ -6,3 +6,4 @@ projects/
 library/models
 library/textures/
 .env
+__pycache__/

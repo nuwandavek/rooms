@@ -5,6 +5,13 @@ import {applyPlacements,insidePolygon} from '../placements.js';
 import {applyInventory} from '../inventory.js';
 
 const home=applyInventory(starter,'| Asset | Room |\n|-|-|\n| Sofa | main |');
+test('lamp anchors retain the authored bulb position and reject malformed positions',()=>{
+  const light={offset:[0,.188,0],radius:.033,colour:'#ffe2b5',bulbMaterial:'globe',dayFactor:1};
+  const placed=applyPlacements(home,JSON.stringify({placements:[{model:'pendant',room:'main',at:[0,0],light}]}));
+  assert.deepEqual(placed.placements[0].light,light);
+  for(const invalid of [{offset:[0,1]}, {offset:[0,1,0],radius:-1}, {offset:[0,1,0],colour:'orange'}, {offset:[0,1,0],dayFactor:-1}])
+    assert.throws(()=>applyPlacements(home,JSON.stringify({placements:[{model:'pendant',room:'main',at:[0,0],light:invalid}]})),/light\./);
+});
 test('placements.json positions models inside rooms and links inventory rows',()=>{
   const placed=applyPlacements(home,JSON.stringify({placements:[{model:'sofa-3seat',room:'main',at:[1,.5],rotation:90,asset:'Sofa'},{model:'bed-queen',room:'main',at:[0,0]}]}));
   assert.deepEqual(placed.placements,[{model:'sofa-3seat',room:'main',at:[1,.5],rotation:90,y:0,asset:'Sofa'},{model:'bed-queen',room:'main',at:[0,0],rotation:0,y:0}]);

@@ -101,7 +101,10 @@ export function createShell(model, palette) {
   // on either side changes and at that room's finish bands, each face in its finish.
   function wallPiece(wall,x0,x1,y0,y1,parent) {
     const thickness=model.wallThickness;
-    if(!finishes)return box(x1-x0,y1-y0,thickness,(x0+x1)/2,(y0+y1)/2,0,materials.wall,parent);
+    if(!finishes) {
+      const piece=box(x1-x0,y1-y0,thickness,(x0+x1)/2,(y0+y1)/2,0,materials.wall,parent);
+      if(piece)piece.userData.bakeWall=true;return piece;
+    }
     const {plus,minus}=sides.get(wall);
     const xs=[x0,...[...plus,...minus].map(r=>r.from).filter(t=>t>x0+.01&&t<x1-.01),x1].sort((a,b)=>a-b);
     for(let i=0;i<xs.length-1;i++) {
@@ -110,8 +113,9 @@ export function createShell(model, palette) {
       for(let j=0;j<ys.length-1;j++) {
         const ym=(ys[j]+ys[j+1])/2;
         const face=room=>finish(wallFinish(finishes,room,ym)) || materials.wall;
-        box(xs[i+1]-xs[i],ys[j+1]-ys[j],thickness,mid,ym,0,
+        const piece=box(xs[i+1]-xs[i],ys[j+1]-ys[j],thickness,mid,ym,0,
           [materials.wall,materials.wall,materials.wall,materials.wall,face(rp),face(rm)],parent);
+        if(piece)piece.userData.bakeWall=true;
       }
     }
   }

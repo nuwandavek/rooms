@@ -1031,7 +1031,8 @@ button:disabled {
 .dev-toggle{display:flex;align-items:center;gap:8px;flex-shrink:0;font:10px var(--font-mono,monospace);color:var(--muted);cursor:pointer;user-select:none}
 .viewer-bar:not(.dev) .tab-step{display:none}
 #panel-home3d{height:calc(100dvh - 56px);min-height:600px}
-.view-toolbar .segmented button{padding:13px 24px;font-size:14px}
+.view-toolbar .segmented button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:48px;min-height:48px;padding:12px;white-space:nowrap}
+.view-toolbar .segmented svg{display:block;flex:none}
 /* Walk always shows full-height walls and no labels, so those settings step aside. */
 .walking .settings :is(.labels-row,.wall-label,#wall-height,.range-labels){display:none}
 /* Guided tour: stop, note and controls under the mode buttons; only lighting stays in View settings. */
@@ -1045,7 +1046,7 @@ button:disabled {
 .walking #scene canvas{cursor:grab}.walking #scene canvas:active{cursor:grabbing}.walking .selection-info{pointer-events:none;opacity:.8}.walking .canvas-footer>span:last-child{display:none}#mouse-look{width:100%;margin:14px 0;font-size:10px;justify-content:center}
 /* Theme-specific typography and components live in themes/. */
 
-@media(max-width:760px){.viewer-bar{padding:0 14px;gap:13px}.compact-brand{font-size:25px}.viewer-bar .tab-bar{gap:0}.tab-bar>button{font-size:10px}.project-details summary{font-size:8px;padding:8px;gap:6px}.project-details-body{right:0}.project-details .metadata dt{font-size:8px}#panel-home3d{height:auto;min-height:0}.view-toolbar{gap:6px}.segmented button{padding:9px 10px}.view-toolbar .segmented button{padding:11px 14px;font-size:12px}.camera-presets{top:76px}.tour-bar{top:128px;left:16px;width:calc(100% - 32px);padding:10px 12px;gap:8px}.tour-text strong{font-size:17px}.dev-toggle{font-size:8px;gap:5px}.viewer-bar .tab-bar{min-width:0;overflow-x:auto;scrollbar-width:none}.viewer-bar.dev{flex-wrap:wrap;height:auto;min-height:56px;padding-top:10px;padding-bottom:10px;row-gap:10px}.viewer-bar.dev .tab-bar{order:1;flex:1 0 100%}.tab-bar>button{white-space:nowrap}.walking .canvas-footer{font-size:8px}.walking .selection-info{bottom:83px}}
+@media(max-width:760px){.viewer-bar{padding:0 14px;gap:13px}.compact-brand{font-size:25px}.viewer-bar .tab-bar{gap:0}.tab-bar>button{font-size:10px}.project-details summary{font-size:8px;padding:8px;gap:6px}.project-details-body{right:0}.project-details .metadata dt{font-size:8px}#panel-home3d{height:auto;min-height:0}.view-toolbar{gap:6px}.segmented button{padding:9px 10px}.view-toolbar .segmented button{padding:8px;gap:4px}.view-toolbar .segmented svg{width:20px;height:20px}.camera-presets{top:76px}.tour-bar{top:128px;left:16px;width:calc(100% - 32px);padding:10px 12px;gap:8px}.tour-text strong{font-size:17px}.dev-toggle{font-size:8px;gap:5px}.viewer-bar .tab-bar{min-width:0;overflow-x:auto;scrollbar-width:none}.viewer-bar.dev{flex-wrap:wrap;height:auto;min-height:56px;padding-top:10px;padding-bottom:10px;row-gap:10px}.viewer-bar.dev .tab-bar{order:1;flex:1 0 100%}.tab-bar>button{white-space:nowrap}.walking .canvas-footer{font-size:8px}.walking .selection-info{bottom:83px}}
 @media(max-width:380px){.viewer-bar{gap:9px;padding:0 10px}.project-details summary{font-size:7px;gap:4px}.compact-brand{font-size:23px}}
 /* Assets tab: inventory table grouped by room. */
 .asset-room{margin-top:44px}
@@ -1071,3 +1072,25 @@ button:disabled {
 .lock-hint{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:5;padding:8px 14px;background:var(--ink);color:var(--sheet);font-size:11px;pointer-events:none}
 .lock-hint kbd{padding:1px 5px;border:1px solid currentColor;font:inherit}
 #mouse-look[aria-pressed=true]{background:var(--accent);color:var(--onAccent)}
+
+@media(max-width:360px){.view-toolbar .segmented button{font-size:9px}}
+
+/* Let the scene emerge behind the loading indicator as assets arrive. */
+.scene-loading{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:color-mix(in srgb,var(--sheet) 70%,transparent);color:var(--ink)}
+.scene-loading-content{display:flex;align-items:center;flex-direction:column;gap:24px;padding:24px;text-align:center}
+.scene-loading-content p{margin:0;font:600 clamp(20px,2.2vw,30px)/1.5 var(--font-mono,monospace)}
+.scene-spinner{width:72px;height:72px;border:6px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:scene-spin .85s linear infinite}
+.load-failed .scene-spinner{display:none}
+.view-toolbar,.camera-presets{z-index:4}
+#error{z-index:5}
+@keyframes scene-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.scene-spinner{animation:none}}
+.walk-help{display:none;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;margin:16px 0;text-align:center}
+.walking:not(.touring) .walk-help{display:grid;justify-items:center;gap:12px}
+.walk-help strong{font:600 13px/1.4 var(--font-mono,monospace);text-transform:uppercase;letter-spacing:.06em}
+.walk-keys{display:grid;grid-template-columns:repeat(3,36px);gap:5px}
+.walk-keys kbd{display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--ink);box-shadow:2px 2px 0 var(--ink);background:var(--sheet);color:var(--ink);font:600 17px/1 var(--font-mono,monospace)}
+.walk-keys kbd:first-child{grid-column:2}
+.walk-keys kbd:nth-child(2){grid-column:1}
+.walk-help p{margin:0;font-size:11px;line-height:1.7}
+@media(max-width:360px){.view-toolbar .segmented button{padding:6px;gap:3px}}

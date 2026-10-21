@@ -37,9 +37,11 @@ Tabs follow the stages: **1 Resources** (floor plan, room galleries, extra photo
 groups), **2 Assets** (inventory), then one shared 3D viewer as **3 Shell**,
 **4 Fit-out** (plus built-ins and finishes; `fixture` rows for now) and **5 Furnished**
 (plus loose items), with room focus, room photographs, and camera/layer/light controls.
-Visitors only see **Listing** (resources) and **3D Tour** (realistic); the top-right
+Visitors see **Listing** (resources), **3D Tour** (realistic), and **3D Tour (Improved Lighting)**
+when a bake exists. The improved tour is the default, with the regular tour as fallback.
+Both tours share the regular isometric cutaway; the bake is used in Walk and Guided Tour. The top-right
 **Dev** toggle or `?dev=1` reveals the authoring tabs, and without it a stage link
-falls back to 3D Tour.
+falls back to the default tour.
 Use `?tab=shell`, `fitout`, `furnished` or `realistic` to open a stage directly, and
 `&mode=walk` (or `tour`) to start in Walk mode (or the Guided Tour). Keep metadata in the collapsible Project details card;
 do not add promotional intro copy or a plan-orientation indicator.

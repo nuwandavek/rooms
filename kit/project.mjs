@@ -7,6 +7,7 @@ import {applyInventory} from './inventory.js';
 import {applyPlacements} from './placements.js';
 import {parseCatalog} from './catalog.js';
 import {parseMaterials,applyFitout} from './fitout.js';
+import {bakeAssets} from './bake-format.js';
 
 export const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 export function projectPath(name) {
@@ -46,6 +47,9 @@ export async function loadProject(name) {
   // tour.json, when present, plans the Guided Tour stops; otherwise it visits featured rooms.
   const tour=await readFile(resolve(dir,'tour.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
   if(tour!==null){try{home={...home,tour:JSON.parse(tour)};}catch(e){throw new Error(`tour.json: ${e.message}`);}}
+  // assets/baked/, from kit/home bake, adds the Baked tab.
+  const bake=await readFile(resolve(dir,'assets/baked/bake.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(bake!==null)home={...home,baked:bakeAssets(JSON.parse(bake))};
   const errors=validateHome(home);
   if(errors.length)throw new Error(errors.join('\n'));
   const realDir=await realpath(dir),images={};

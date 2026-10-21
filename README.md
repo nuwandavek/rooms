@@ -75,12 +75,15 @@ to `kit/home` from any directory, or use `npm run home -- <command> <name>`.
 
 ## Viewer tabs
 
-Visitors see two tabs: **Listing** (the resources) and **3D Tour** (the Realistic
-stage). The **Dev** toggle at top right (off by default, remembered per browser, or
+Visitors see **Listing** (the resources), **3D Tour** (the Realistic stage), and
+**3D Tour (Improved Lighting)** when a bake exists. The improved tour opens by
+default, falling back to the regular tour for homes without a bake. Both tours
+share the same isometric cutaway; improved lighting applies in Free Walk and Guided Tour.
+The **Dev** toggle at top right (off by default, remembered per browser, or
 `?dev=1`) shows every tab, numbered by authoring stage: **1 Listing** (resources),
 **2 Assets**, **3 Shell**, **4 Fit-out**, **5 Furnished**, **6 3D Tour** (realistic).
 
-**Resources** opens first: the floor plan, room photo galleries, and other source
+**Resources** contains the floor plan, room photo galleries, and other source
 images. Click any image to enlarge it, or use **View in 3D** to focus its room.
 **Assets** lists the inventory. **Shell**, **Fit-out** and **Furnished** share one 3D
 viewer and add layers left to right: walls, rooms and openings; then the project's
@@ -121,6 +124,26 @@ source) plus `library/models/*.glb` (gitignored, shared separately); see
 `library/README.md` for importing downloads and generating models.
 `placements.json` puts library models into the 3D home (toggle with **Furniture** in
 View settings); see `kit/model.md` for the format.
+
+## Baked lighting
+
+With Blender installed, `kit/home bake kalpataru-radiance --draft` exports
+the furnished scene and bakes separate daylight and night lightmaps. Use
+the command without `--draft` for a 4096² atlas with 128 samples (draft: 2048², 64 samples).
+Set `BLENDER=/path/to/blender` if Blender is not in the standard application path.
+Refresh the viewer and choose **3D Tour (Improved Lighting)** to inspect the result.
+
+The bake includes diffuse direct light, bounced light and furniture shadows.
+Overlapping structural wall boxes are united before baking, and the ceiling is
+clipped to their inner faces. Lightmap borders are rebuilt from interior texels to
+remove bright seams, and narrow charts are filtered separately so wall ends and
+skirting do not pick up neighbouring surfaces.
+Furniture and reflective materials remain live; local room probes supply their
+reflections. Day and night use separate half-float HDR lightmaps (ZIP-compressed EXR)
+to preserve smooth shadow gradients. The previous bake is
+kept under `out/bake/previous-*`; an incomplete bake never replaces it.
+Lamp origins can be anchored to the actual bulb with placement `light` metadata
+(see `kit/model.md`). Lighting remains an illustrative study, not a measurement.
 
 ## Build and check
 

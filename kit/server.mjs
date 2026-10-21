@@ -43,7 +43,7 @@ export async function serveProject(name,port=4173) {
       const file=await realpath(resolve(project,'.'+decodeURIComponent(url.pathname)));
       const rel=relative(project,file);
       if(rel==='..'||rel.startsWith('..'+sep)){res.writeHead(403).end();return;}
-      const mime={'.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.md':'text/plain; charset=utf-8','.json':'application/json'}[extname(file)];
+      const mime={'.glb':'model/gltf-binary','.exr':'application/octet-stream','.jpg':'image/jpeg','.jpeg':'image/jpeg','.png':'image/png','.webp':'image/webp','.md':'text/plain; charset=utf-8','.json':'application/json'}[extname(file)];
       if(!mime){res.writeHead(404).end();return;}
       res.writeHead(200,{'Content-Type':mime});res.end(req.method==='HEAD'?undefined:await readFile(file));
     } catch(error) {

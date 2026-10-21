@@ -37,6 +37,7 @@ export function markup(home) {
       <button id="tab-fitout" data-dev role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
       <button id="tab-furnished" data-dev role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
       <button id="tab-realistic" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="The furnished home with realistic lighting and materials"><span class="tab-step">6.</span>3D Tour</button>
+      ${home.baked?'<button id="tab-baked" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Explore the home with baked lighting and soft shadows"><span class="tab-step">7.</span>3D Tour (Improved Lighting)</button>':''}
     </div>
     <details class="project-details"><summary>Project details <span>＋</span></summary><div class="project-details-body">
       <div class="project-card-title"><span class="brand-mark">${escape(home.mark || 'h.')}</span><h2>${escape(home.brand || home.title)}</h2></div>
@@ -70,10 +71,15 @@ export function markup(home) {
     </aside>
     <section class="viewport" aria-label="Interactive home model">
       <div id="scene"></div><div id="labels"></div><div id="lock-hint" class="lock-hint" role="status" hidden>Mouse look · Press <kbd>Esc</kbd> to exit</div>
-      <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">Isometric View</button><button id="walk-button" aria-pressed="false">Free Walk</button><button id="tour-button" aria-pressed="false">Guided Tour</button></div></div>
+      <div class="view-toolbar"><div class="segmented" role="group" aria-label="Camera mode">
+        <button id="orbit-button" class="active" aria-pressed="true" aria-label="Isometric View" title="Isometric View"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false"><path d="m270-120-10-88 114-314q15 14 32.5 23.5T444-484L334-182l-64 62Zm420 0-64-62-110-302q20-5 37.5-14.5T586-522l114 314-10 88ZM395-555q-35-35-35-85 0-39 22.5-69.5T440-752v-88h80v88q35 12 57.5 42.5T600-640q0 50-35 85t-85 35q-50 0-85-35Zm113.5-56.5Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5Z"/></svg><span>Isometric View</span></button>
+        <button id="walk-button" aria-pressed="false" aria-label="Free Walk" title="Free Walk"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false"><path d="m280-40 112-564-72 28v136h-80v-188l202-86q14-6 29.5-7t29.5 4q14 5 26.5 14t20.5 23l40 64q26 42 70.5 69T760-520v80q-70 0-125-29t-94-74l-25 123 84 80v300h-80v-260l-84-64-72 324h-84Zm203.5-723.5Q460-787 460-820t23.5-56.5Q507-900 540-900t56.5 23.5Q620-853 620-820t-23.5 56.5Q573-740 540-740t-56.5-23.5Z"/></svg><span>Free Walk</span></button>
+        <button id="tour-button" aria-pressed="false" aria-label="Guided Tour" title="Guided Tour"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true" focusable="false"><path d="M520-240q-17 0-28.5-11.5T480-280v-160q0-17 11.5-28.5T520-480h160q17 0 28.5 11.5T720-440v40l80-42v164l-80-42v40q0 17-11.5 28.5T680-240H520ZM160-120v-480l320-240 320 240v80h-80v-40L480-740 240-560v360h560v80H160Zm320-350Z"/></svg><span>Guided Tour</span></button>
+      </div></div>
       <div class="segmented camera-presets" id="camera-presets" role="group" aria-label="Camera"><button id="reset-camera" title="Whole home, default camera">↺ Reset</button><button id="top-view">Top-down</button></div>
       <details class="settings" open><summary>View settings <span>＋</span></summary>
         <button id="mouse-look" class="quiet-button" aria-pressed="false" hidden>Mouse look ↗</button>
+        <div class="walk-help" role="group" aria-label="Free Walk keyboard controls"><strong>Move around</strong><div class="walk-keys" aria-hidden="true"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div><p>Use WASD or the arrow keys.<br>Drag to look around.</p></div>
         <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-output" aria-label="Zoom level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button></div>
         <label class="switch-row labels-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
         <label class="switch-row">Doors closed<input id="doors-closed" type="checkbox"></label>
@@ -89,6 +95,7 @@ export function markup(home) {
         <div class="tour-controls"><button id="tour-previous" aria-label="Previous stop">‹</button><button id="tour-play"></button><button id="tour-next" aria-label="Next stop">›</button></div>
       </div>
       <footer class="canvas-footer"><span id="navigation-help">Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Right-drag to pan</span><span>Metres / approximate geometry</span></footer>
+      <div id="scene-loading" class="scene-loading"><div class="scene-loading-content"><span class="scene-spinner" aria-hidden="true"></span><p id="scene-loading-label" role="status" aria-live="polite">Loading your home…</p><button id="loading-fallback" class="quiet-button" hidden>Use 3D Tour</button></div></div>
       <div id="error" role="alert" hidden></div>
     </section>
   </main>
@@ -100,22 +107,24 @@ export function markup(home) {
 // Tabs follow the authoring stages. Shell, Fit-out and Furnished share the 3D panel and
 // add layers left to right; `onStage` tells the viewer which one is showing.
 // Dev mode (the top-right toggle, remembered per browser, or ?dev=1) shows the authoring
-// tabs; otherwise only Listing (resources) and 3D Tour (realistic) are offered.
-export const STAGES=['shell','fitout','furnished','realistic'];
+// tabs; visitors see Listing and both tours when improved lighting is available.
+export const STAGES=['shell','fitout','furnished','realistic','baked'];
 export function setupUI(home,target,onRoom,onStage=()=>{}) {
   const get=id=>target.querySelector(`#${id}`);
-  let tab='resources',stage='furnished';
-  const tabs=['resources','assets',...STAGES];
+  const defaultTour=home.baked?'baked':'realistic';
+  let tab='resources',stage=defaultTour;
+  const tabs=['resources','assets',...STAGES].filter(key=>get(`tab-${key}`));  // Baked only once a bake exists.
   const panel=key=>STAGES.includes(key)?'home3d':key;
   const params=new URLSearchParams(location.search);
   let dev=params.has('dev')?params.get('dev')!=='0':false;
   if(!params.has('dev'))try{dev=localStorage.getItem('home3d-dev')==='1';}catch{/* Storage may be blocked. */}
-  const visibleTabs=()=>dev?tabs:['resources','realistic'];
+  const visitorTabs=tabs.filter(key=>['resources','realistic','baked'].includes(key));
+  const visibleTabs=()=>dev?tabs:visitorTabs;
   let previewsStarted=false;
   function setTab(name,updateURL=true) {
     if(name==='home3d')name=stage;  // Older links and the room buttons open the last 3D stage.
     if(!dev&&name==='assets')name='resources';
-    else if(!dev&&STAGES.includes(name))name='realistic';
+    else if(!dev&&STAGES.includes(name)&&!visitorTabs.includes(name))name=defaultTour;
     tab=tabs.includes(name)?name:'resources';
     for(const key of ['resources','assets','home3d'])get(`panel-${key}`).hidden=key!==panel(tab);
     for(const key of tabs) {
@@ -183,6 +192,6 @@ export function setupUI(home,target,onRoom,onStage=()=>{}) {
     });
   }
   target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get(`tab-${tab}`).focus();});
-  setTab(params.get('tab'),false);
+  setTab(params.get('tab') || defaultTour,false);
   return {setTab,showPhoto,get tab(){return tab;},get in3d(){return STAGES.includes(tab);},get stage(){return stage;}};
 }

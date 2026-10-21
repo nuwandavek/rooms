@@ -120,7 +120,7 @@ html[data-theme=riso] .room-thumbnails button[aria-pressed=true] { border-color:
 html[data-theme=riso] .segmented { padding: 0; gap: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
 html[data-theme=riso] .segmented button { padding: 9px 12px; font: 400 10px/1.4 var(--font-mono); }
 html[data-theme=riso] .segmented button + button { border-left: 1px solid var(--ink); }
-html[data-theme=riso] .view-toolbar .segmented button { padding: 13px 22px; font-size: 13px; }
+html[data-theme=riso] .view-toolbar .segmented button { padding: 12px; }
 html[data-theme=riso] .tour-bar { border: 2px solid var(--ink); border-radius: 0; box-shadow: 3px 3px 0 var(--ink); }
 html[data-theme=riso] .tour-position { color: var(--accent); }
 html[data-theme=riso] .tour-text strong { font: 900 22px/1.1 var(--font-display); }
@@ -141,7 +141,7 @@ html[data-theme=riso] dialog::backdrop { background: #1C2340b3; backdrop-filter:
   html[data-theme=riso] .compact-brand { font-size: 26px; }
   html[data-theme=riso] .tab-bar > button { font-size: 9px; padding: 0 7px; }
   html[data-theme=riso] .project-details summary { font-size: 8px; padding: 8px 6px; }
-  html[data-theme=riso] .view-toolbar .segmented button { padding: 11px 12px; font-size: 11px; }
+  html[data-theme=riso] .view-toolbar .segmented button { padding: 8px; }
   html[data-theme=riso] .resource-section-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
   html[data-theme=riso] .resource-section-heading > span { font-size: 9px; padding: 5px 8px; }
   html[data-theme=riso] .floor-plan-preview { padding: 10px; }
@@ -159,3 +159,6 @@ html[data-theme=riso] .asset-kind { background: var(--manila); padding: 2px 6px;
 html[data-theme=riso] .asset-photos button { border: 1.5px solid var(--ink); }
 html[data-theme=riso] .lock-hint{font:400 10px/1.4 var(--font-mono);letter-spacing:.04em;text-transform:uppercase;border:2px solid var(--ink);background:var(--yellow);color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
 html[data-theme=riso] #mouse-look[aria-pressed=true]{background:var(--yellow);color:var(--ink)}
+
+@media (max-width:360px) { html[data-theme=riso] .view-toolbar .segmented button { font-size: 9px; } }
+@media (max-width:360px) { html[data-theme=riso] .view-toolbar .segmented button { padding: 6px; } }

@@ -11,6 +11,7 @@ const help=`Home3D — one kit, many homes
   kit/home open <name>                Build and open the standalone HTML
   kit/home serve <name> [--port 4173]  Local server; edit source and refresh to rebuild
   kit/home check <name>               Validate, build, exercise controls, save screenshots
+  kit/home bake <name> [--draft]      Bake Blender lighting for the Baked tab (needs Blender)
   kit/home publish <name>             Stage a self-contained site in projects/<name>/out/site
   kit/home deploy <name> [--dry-run]  Publish to $ROOMS_ORIGIN/<name>/ via S3 and CloudFront (.env)
 
@@ -40,6 +41,8 @@ try {
   } else if(command==='publish'||command==='deploy') {
     const {publishProject,deployProject}=await import('./publish.mjs');
     if(command==='publish')await publishProject(name);else await deployProject(name,{dryRun:args.includes('--dry-run')});
+  } else if(command==='bake') {
+    const {bakeProject}=await import('./bake.mjs');await bakeProject(name,{quality:args.includes('--draft')?'draft':'final'});
   } else if(command==='check') {
     const {checkProject}=await import('./check.mjs');await checkProject(name);
   } else throw new Error(`Unknown command: ${command}\n${help}`);
