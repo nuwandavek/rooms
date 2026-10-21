@@ -1,8 +1,8 @@
 // Adds models to library/catalog.json from a JSON list written by import.py or a generator:
 //
 //   node library/tools/catalog.mjs add entries.json
-//   [{"id":"kenney-chair","path":"models/kenney-chair.glb","size":[0.4,0.94,0.4],
-//     "origin":"sourced","source":"Kenney Furniture Kit 2.0: chair.glb","licence":"CC0","tris":120}]
+//   [{"id":"cgt-chair-09","path":"models/catalog/cgt-chair-09.glb","size":[0.43,0.79,0.49],
+//     "origin":"sourced","source":"CGT Free Pack (Gumroad): FBX/CGT_Chair_009.fbx","licence":"CGTrader free pack (royalty free)","tris":2688}]
 //
 // `node library/tools/catalog.mjs check` reports rows whose file is missing and models
 // with no row.

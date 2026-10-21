@@ -47,7 +47,7 @@ Change project data for one home; change the kit for behavior shared by homes.
 ## Making a home
 
 Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), then
-**assets** (7), then **placement** (8). Model sourcing beyond blockouts is still open.
+**assets** (7), then **placement** (8). Models come from the realistic library in `library/` (see its README).
 
 1. Run `kit/home list`, then `kit/home new <kebab-case-name>`. Existing folders
    are refused. The starter is an explicitly fictional 6 × 4 m room; replace it
@@ -82,9 +82,11 @@ Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), t
    one table row per distinct item with Room (id), Kind (fixture, appliance,
    furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
    Estimate Dims (w×h×d) and a Colour hint per row. For Model, use a catalog id from
-   `library/catalog.json` where one fits (as is, a modified copy, or a new generator in
-   `library/generators/`; see `library/README.md`), or a primitive such as `@frame`,
-   `@rug`, `@curtain`, `@box` for low-stakes items. The Assets tab renders each one.
+   `library/catalog.json` where one fits (as is, a modified copy, or a new import; see
+   `library/README.md`), or a primitive such as `@frame`, `@rug`, `@curtain`, `@box` for
+   low-stakes items. The catalog is realistic models only, so Colour recolours every
+   material on a model: leave it empty when the model already matches the photo. The
+   Assets tab renders each one.
 
 8. **Fit-out.** Write `fitout.json` from the photos: floor and wall finishes per room
    (wet rooms usually tiled to a band), door and frame materials, and built-ins such
