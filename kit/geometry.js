@@ -64,6 +64,7 @@ export function createShell(model, palette) {
     result.position.set(x,y,z);
     return result;
   };
+  const doorHardware=new THREE.MeshStandardMaterial({color:'#c8cacc',roughness:.28,metalness:1});  // brushed steel
   // Finishes (Fit-out and Furnished tabs). Null shows the plain shell.
   let finishes=null,realistic=false,lastHeight=model.cutaway,lastWalking=false;
   const finish=id=>id&&finishes ? buildMaterial(id,finishes.materials[id],realistic) : null;
@@ -127,6 +128,7 @@ export function createShell(model, palette) {
     clear(walls); clear(openings);
     const doorMat=finish(finishes?.doors) || materials.door,doorFrame=finish(finishes?.doorFrames) || materials.door;
     const windowFrame=finish(finishes?.windowFrames) || materials.frame;
+    const hardware=doorHardware;
     const thickness = model.wallThickness;
     for (const wall of model.walls) {
       const length = Math.hypot(wall.b[0]-wall.a[0],wall.b[1]-wall.a[1]);
@@ -148,7 +150,18 @@ export function createShell(model, palette) {
             leaf.position.set(start+.02,bottom,0); leaf.rotation.y=-Math.PI*.4;
             leaf.userData.doorLeaf=true;  // The viewer's "Doors closed" setting swings it shut.
             detail.add(leaf);
-            box(width-.05,h,.035,(width-.05)/2,h/2,0,doorMat,leaf);
+            const lw=width-.05;
+            box(lw,h,.035,lw/2,h/2,0,doorMat,leaf);
+            // Hardware: three hinges on the hinge edge, a lever handle with a round rose each side.
+            for(const y of [.2,h/2,h-.2]) box(.012,.1,.04,.006,y,0,hardware,leaf);
+            const hx=lw-.07,hy=Math.min(1.02,h*.5);
+            for(const side of [1,-1]) {
+              const rose=mesh(new THREE.CylinderGeometry(.026,.026,.01,24),hardware,leaf);
+              rose.rotation.x=Math.PI/2;rose.position.set(hx,hy,side*.0225);
+              const neck=mesh(new THREE.CylinderGeometry(.008,.008,.05,12),hardware,leaf);
+              neck.rotation.x=Math.PI/2;neck.position.set(hx,hy,side*.045);
+              box(.13,.016,.02,hx-.055,hy,side*.07,hardware,leaf);
+            }
           } else {
             box(width,.035,.14,start+width/2,bottom+.018,0,frame,detail);
             // Sliding doors are shown open for the walkthrough.

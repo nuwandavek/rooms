@@ -83,7 +83,7 @@ Homes are built in stages: **resources** (steps 1–2), **v0 layout** (3–6), t
    furniture, lighting, decor), Qty, the photos it appears in, and placement notes.
    Estimate Dims (w×h×d) and a Colour hint per row. For Model, use a catalog id from
    `library/catalog.json` where one fits (as is, a modified copy, or a new import; see
-   `library/README.md`), or a primitive such as `@frame`, `@rug`, `@curtain`, `@box` for
+   `library/README.md`), or a primitive such as `@frame`, `@rug`, `@curtain`, `@basin`, `@tap`, `@box` for
    low-stakes items. The catalog is realistic models only, so Colour recolours every
    material on a model: leave it empty when the model already matches the photo. The
    Assets tab renders each one.

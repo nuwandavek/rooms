@@ -43,6 +43,8 @@ PACKS = {
     'furnpack': {'glob': '*/*/*.obj', 'prefix': 'furnpack', 'scale': 1.0, 'turn': -90, 'by_folder': True,
                  'turns': {n: 0 for n in ('sofa', 'armchair', 'chair4', 'bath', 'shower', 'table4', 'table5')},
                  'textures': ['.'], 'scales': {'sofa': 0.34, 'armchair': 0.34},
+                 # The beds came without textures and with mirror-smooth bedding; house-bed-queen replaces them.
+                 'skip': {'bed1', 'bed2', 'mirror'},
                  'licence': 'Unknown (user download)', 'source': 'Furniture Pack OBJ'},
     # 24 cushions in two fabric patterns x three colours (2k textures, downsized). Units are ~4x;
     # Pillow_7-12 and the rectangular 7-12 stand upright, facing +x.
@@ -251,7 +253,7 @@ def run(pack, folder):
             name = cfg.get('name') or kebab(cfg['rename'](stem) if cfg.get('rename') else stem)
             if cfg.get('strip') and name.endswith(cfg['strip']): name = name[:-len(cfg['strip'])]
             if cfg.get('strip_prefix') and name.startswith(cfg['strip_prefix']): name = name[len(cfg['strip_prefix']):]
-            jobs.append((path, None, name))
+            if name not in cfg.get('skip', ()): jobs.append((path, None, name))
     for path, part, name in jobs:
         id = f'{cfg["prefix"]}-{kebab(name)}'
         if any(e['id'] == id for e in entries): raise SystemExit(f'{pack}: duplicate id {id}')
@@ -290,6 +292,9 @@ def run(pack, folder):
         json.dump(entries, f)
     subprocess.run(['node', os.path.join(LIBRARY, 'tools', 'catalog.mjs'), 'add', f.name], check=True)
     os.unlink(f.name)
+    # Unused texture alpha exports as see-through; settle each material's alpha mode.
+    if cfg.get('folder', 'catalog') == 'catalog':
+        subprocess.run(['node', os.path.join(LIBRARY, 'tools', 'alpha.mjs'), cfg['prefix'] + '-'], check=True)
 
 args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
 if len(args) != 2 or args[0] not in PACKS:

@@ -53,7 +53,9 @@ Each pack has a recipe in `tools/import.py`: which files to read, an id prefix, 
 scale and turn found once from a reference piece (a door or bed), with per-model
 `scales`/`turns` for pieces modelled differently. Missing texture links are relinked by
 file name (`textures`), FBX materials from Corona/V-Ray scenes are rebuilt (metal tint
-is read from the FBX specular colour), and textures are capped at 1024 px. A new pack
+is read from the FBX specular colour), textures are capped at 1024 px, and
+`tools/alpha.mjs` then marks each material opaque, cut-out (foliage) or blended (glass),
+since unused texture alpha otherwise makes whole models see-through. A new pack
 needs a new recipe. The contact sheet shows every model from its front-right with its size; a
 model seen from the back is turned wrong. Once converted, the download can be deleted:
 the catalog records the pack and original file for each model.
@@ -75,7 +77,7 @@ Imported so far:
   paintings and props). Broken pieces are skipped in its recipe.
 - **Licence unknown** (user downloads): "Furniture Pack OBJ" (`furnpack-*`, 34 textured
   wooden beds, wardrobes, tables, chairs, kitchen cabinets and bathroom pieces; fronts
-  turned from +x, sofa and armchair x0.34); `pillows.glb` (`cushion-square-*`,
+  turned from +x, sofa and armchair x0.34; its beds and mirror were dropped); `pillows.glb` (`cushion-square-*`,
   `cushion-long-*`: two fabric patterns x three colours, flat and upright; x0.24);
   `carpets_pack.glb` (`rug-01`...`08`, photo-textured, x0.34); one split AC indoor unit
   (`split-ac-indoor`); a stainless French-door fridge (`fridge-french-door`; its display texture was missing, so the panel is plain).
