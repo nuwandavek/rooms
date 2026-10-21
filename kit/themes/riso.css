@@ -80,6 +80,7 @@ html[data-theme=riso] .project-card-title h2 { font: 900 28px/1.1 var(--font-dis
 html[data-theme=riso] .brand-mark { color: var(--accent); font-weight: 900; }
 html[data-theme=riso] .project-details .metadata { border-top: 1px dashed var(--ink); }
 html[data-theme=riso] .metadata dd { font: 700 28px/1.2 var(--font-mono); }
+html[data-theme=riso] .project-details .metadata dd { font-size: 24px; }
 html[data-theme=riso] .metadata :is(dt, small) { font: 400 10px/1.4 var(--font-mono); }
 html[data-theme=riso] .resource-section-heading { align-items: center; }
 html[data-theme=riso] .resource-section-heading :is(h1,h2) {
