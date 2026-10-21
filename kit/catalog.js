@@ -15,7 +15,7 @@ export const FIELDS=['id','path','category','size','origin','source','licence','
 export function parseCatalog(json) {
   if(!json.trim())return [];
   const data=JSON.parse(json);
-  if(!Array.isArray(data?.models))throw new Error('library/catalog.json: expected {"models": [...]}');
+  if(!Array.isArray(data?.models))throw new Error('catalog: expected {"models": [...]}');
   return data.models;
 }
 

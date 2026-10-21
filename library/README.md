@@ -5,7 +5,8 @@ Shared 3D models for every home, referenced by id from a project's `inventory.md
 
 | Path | Tracked | What |
 | --- | --- | --- |
-| `catalog.json` | yes | One entry per model: id, path, category, size, origin, source, licence |
+| `catalog.json` | yes | Indoor models (what homes furnish with): id, path, category, size, origin, source, licence |
+| `outside.json` | yes | Walk mode's city kits (`models/outside/`), same fields; only `kit/surroundings.js` uses them |
 | `models/` | **no** (gitignored) | The GLB files: `models/catalog/<id>.glb` (furniture, decor) and `models/outside/<id>.glb` (cartoon city kits for Walk mode's surroundings). Shared separately |
 | `tools/` | yes | Importing downloads, catalog checks, contact sheets |
 
@@ -14,7 +15,8 @@ fails if an id is not in the catalog or its file is missing from `models/`.
 
 ## Catalog fields
 
-`catalog.json` holds `{"models": [...]}`, one model per line, sorted by id:
+`catalog.json` and `outside.json` hold `{"models": [...]}`, one model per line, sorted by id.
+Imports land in one or the other by folder:
 
 | Field | Meaning |
 | --- | --- |
@@ -67,12 +69,16 @@ Imported so far:
 - **Licence unknown**: `GLASS.obj`, split into five glass bud vases and bottles
   (`bud-vase-01`...`05`); its `.max` source has V-Ray materials we cannot read, so the
   importer gives them a plain clear glass.
+- **House Interior Furniture Pack - Modern Suburban** (purchased, game-ready; `house-*`, 85
+  pieces split from six furnished room scenes: beds, sofas, louvred wardrobe, kitchen base
+  cabinets, dining tables and chairs, TV unit, bathtub, vanity, curtains, lamps, plants,
+  paintings and props). Broken pieces are skipped in its recipe.
 - **Licence unknown** (user downloads): "Furniture Pack OBJ" (`furnpack-*`, 34 textured
   wooden beds, wardrobes, tables, chairs, kitchen cabinets and bathroom pieces; fronts
   turned from +x, sofa and armchair x0.34); `pillows.glb` (`cushion-square-*`,
   `cushion-long-*`: two fabric patterns x three colours, flat and upright; x0.24);
   `carpets_pack.glb` (`rug-01`...`08`, photo-textured, x0.34); one split AC indoor unit
-  (`split-ac-indoor`).
+  (`split-ac-indoor`); a stainless French-door fridge (`fridge-french-door`; its display texture was missing, so the panel is plain).
 
 Packs with many items in one file use `split` in their recipe: each mesh becomes its
 own model.

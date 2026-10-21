@@ -77,9 +77,10 @@ export async function loadProject(name) {
   }
   // City models for Walk mode's surroundings, when the library has them (optional).
   const {SCENE_MODELS:CITY_MODELS}=await import('./surroundings.js').catch(()=>({SCENE_MODELS:null}));
+  const outside=new Map(parseCatalog(await readFile(resolve(root,'library/outside.json'),'utf8').catch(()=>'')).map(r=>[r.id,r]));
   const cityModels={};
   for(const id of new Set(Object.values(CITY_MODELS || {}).flat())) {
-    const entry=catalog.get(id);
+    const entry=outside.get(id);
     if(entry&&await access(resolve(root,'library',entry.path)).then(()=>true,()=>false))cityModels[id]=`../../../library/${entry.path}`;
   }
   home={...home,cityModels};

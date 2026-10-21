@@ -54,6 +54,21 @@ PACKS = {
     'carpets': {'glob': 'source/carpets_pack.glb', 'prefix': 'rug', 'scale': 0.34, 'turn': 0, 'split': True,
                 'part': lambda n: f'{int(n.split(".")[1]) + 1 if "." in n else 1:02d}',
                 'licence': 'Unknown (user download)', 'source': 'carpets-and-tiles-pack (user download)'},
+    # "House Interior Furniture Pack - Modern Suburban" (game-ready): six furnished room scenes as
+    # FBX with 2k textures embedded; each piece in a scene becomes a model (`pieces`).
+    # The kitchen chairs face +x.
+    'house-pack': {'glob': '*/MODEL/*.fbx', 'prefix': 'house', 'scale': 1.0, 'turn': 0, 'pieces': True,
+                   'turns': {'kitchen-chair-fabric': -90, 'kitchen-chair-wooden': -90},
+                   # Broken or poor pieces (scattered parts, built-in walls, no mattress) and ones a
+                   # nicer catalog model replaces (fridge-french-door, furnpack-toilet).
+                   'skip': {'workdesk', 'kitcabinet-full-corner-bar', 'kitcabinet-low-corner', 'kitcabinet-upper-1-x-a',
+                            'kitcabinet-upper-1-x-b', 'kitcabinet-upper-1x-a', 'kitcabinet-upper-1x-b',
+                            'kitcabinet-upper-1x-cookerhood', 'kitcabinet-upper-corner', 'kitcabinet-full-fridge',
+                            'fireplace-withwall', 'clothcloset-with-wall', 'bed-small', 'kp-glass-black', 'fridge', 't-toilet'},
+                   'licence': 'Purchased asset pack (check store licence)', 'source': 'House Interior Furniture Pack - Modern Suburban'},
+    # French-door stainless fridge (FBX, ~21 units tall; textures not included, so plain steel).
+    'fridge-french': {'glob': 'modern_refrigerator_LOWPOLY.fbx', 'prefix': 'fridge', 'name': 'french-door', 'scale': 0.084, 'turn': 0,
+                      'licence': 'Unknown (user download)', 'source': 'modern_refrigerator_LOWPOLY.fbx'},
     # Kenney City Kit (Commercial) 2.1: city blocks seen from Walk mode (kit/surroundings.js).
     'kenney-city': {'folder': 'outside', 'glob': 'Models/GLB format/*building*.glb', 'prefix': 'city', 'scale': 8.0,  # building-a is 1.29 units for 3 floors: x8 = ~3.2 m a floor
                     'turn': 0,
@@ -151,7 +166,7 @@ def drop_missing():
     # A link to a texture that is not there renders black (or pink); fall back to the plain colour.
     for m in bpy.data.materials:
         for n in list(m.node_tree.nodes if m.node_tree else []):
-            if n.type == 'TEX_IMAGE' and (not n.image or not n.image.has_data and not os.path.exists(bpy.path.abspath(n.image.filepath))):
+            if n.type == 'TEX_IMAGE' and (not n.image or n.image.size[0] == 0):  # size loads the image (or finds it missing)
                 m.node_tree.nodes.remove(n)
 
 def shrink():
@@ -195,8 +210,8 @@ def stats():
     return tris, sorted(mats)
 
 def keep_only(part):
-    # Leave one mesh (and its parents); drop every other mesh.
-    keep = {part}
+    # Leave one mesh with its parents and child parts (doors, drawers); drop every other mesh.
+    keep = {part} | {c.name for c in bpy.data.objects[part].children_recursive}
     o = bpy.data.objects[part]
     while o.parent: keep.add(o.parent.name); o = o.parent
     for o in list(bpy.context.scene.objects):
@@ -218,7 +233,17 @@ def run(pack, folder):
     jobs = []
     for path in sorted(glob.glob(os.path.join(folder, cfg['glob']))):
         if cfg.get('files') and os.path.splitext(os.path.basename(path))[0] not in cfg['files']: continue
-        if cfg.get('split'):
+        if cfg.get('pieces'):
+            # A furnished room scene: each child of the scene's root group is one piece; repeated
+            # copies (`Chair__1_`, `Sidetable_1`) are skipped, across files too.
+            load(path)
+            roots = [o for o in bpy.context.scene.objects if o.parent is None]
+            pieces = roots[0].children if len(roots) == 1 and roots[0].type == 'EMPTY' else roots
+            for o in pieces:
+                if o.type != 'MESH' and not any(c.type == 'MESH' for c in o.children_recursive): continue
+                name = kebab(re.sub(r'(__\d+_)+(_\d+)?$|_\d+$', '', o.name))
+                if name not in cfg.get('skip', ()) and name not in {j[2] for j in jobs}: jobs.append((path, o.name, name))
+        elif cfg.get('split'):
             load(path)
             jobs += [(path, o.name, cfg['part'](o.name)) for o in bpy.context.scene.objects if o.type == 'MESH']
         else:
@@ -232,6 +257,13 @@ def run(pack, folder):
         if any(e['id'] == id for e in entries): raise SystemExit(f'{pack}: duplicate id {id}')
         load(path)
         if part: keep_only(part)
+        if part and cfg.get('pieces'):
+            # Undo the piece's spin in the room (about the scene's vertical, FBX local y) so every
+            # piece faces the way it was modelled; loose pieces also take the scene's y-up fix.
+            o = bpy.data.objects[part]
+            if o.parent: o.rotation_euler.y = 0
+            else: o.rotation_euler = (math.pi / 2, 0, 0)
+            bpy.context.view_layer.update()
         if cfg.get('glass'): glassify()
         if cfg.get('textures'): relink([os.path.join(os.path.dirname(path) if d == '.' else folder, d) for d in cfg['textures']])
         if path.endswith('.fbx'): fbx_materials(path)
