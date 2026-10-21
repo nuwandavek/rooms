@@ -141,7 +141,7 @@ export function createWalk(model,canvas) {
     if(active===value)return;active=value;stop();showRing(null);
     if(!active&&document.pointerLockElement===canvas)document.exitPointerLock();
   }
-  return {camera,setActive,
+  return {camera,space,setActive,
     enter(room) {
       const [x,z]=space.spawn(room);camera.position.set(x,EYE_HEIGHT+.015,z);glide=null;
       const xs=model.outline.map(p=>p[0]),zs=model.outline.map(p=>p[1]);

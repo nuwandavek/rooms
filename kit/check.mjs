@@ -30,7 +30,7 @@ export async function checkProject(name) {
       if(host==='127.0.0.1' || (host==='fonts.gstatic.com' && request.resourceType()==='font'))return route.continue();
       errors.push(`Unexpected network request: ${request.url()}`);return route.abort();
     });
-    await page.goto(local);
+    await page.goto(`${local}?dev=1`);  // Dev mode shows every authoring tab.
     await page.waitForFunction(()=>document.body.dataset.modelReady==='true',{},{timeout:20000});
     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
     await page.evaluate(()=>document.fonts.ready);
@@ -117,6 +117,20 @@ export async function checkProject(name) {
     const afterWalk=await page.evaluate(()=>window.home3d.camera.position.toArray());
     assert.ok(Math.hypot(afterWalk[0]-beforeWalk[0],afterWalk[2]-beforeWalk[2])>.05,'WASD moves the camera');
     await page.screenshot({path:resolve(out,'check-walk.png')});
+    // Guided Tour drives the walk camera from stop to stop; Free Walk takes over in place.
+    await page.locator('#tour-button').click();
+    assert.equal(await page.locator('#tour-bar').isVisible(),true);
+    assert.equal(await page.locator('#doors-closed').isVisible(),false,'Tour settings only offer lighting');
+    await page.locator('#tour-next').click();
+    const atStop=await page.evaluate(()=>window.home3d.camera.position.toArray());
+    await page.waitForTimeout(400);
+    await page.screenshot({path:resolve(out,'check-tour.png')});
+    await page.locator('#tour-play').click();
+    assert.equal(await page.locator('#tour-play').textContent(),'▶ Play');
+    await page.locator('#walk-button').click();
+    assert.equal(await page.locator('#tour-bar').isVisible(),false);
+    const tookOver=await page.evaluate(()=>window.home3d.camera.position.toArray());
+    assert.ok(Math.hypot(tookOver[0]-atStop[0],tookOver[2]-atStop[2])<.5,'Free Walk continues from the tour position');
     await page.locator('#orbit-button').click();
     assert.equal(await page.evaluate(()=>window.home3d.camera.isOrthographicCamera),true);
     await page.locator('#tab-resources').click();
@@ -147,7 +161,7 @@ export async function checkProject(name) {
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Mobile resource gallery must not overflow');
     await page.screenshot({path:resolve(out,'check-resources-mobile.png'),fullPage:false});
     assert.deepEqual(errors,[],'No browser errors or external requests');
-    await writeFile(resolve(out,'check.json'),JSON.stringify({project:name,checkedAt:new Date().toISOString(),rooms:home.model.rooms.length,theme:home.theme || 'riso',errors,screenshots:['check-resources.png','check-3d.png','check-top-down.png','check-light.png','check-walk.png','check-assets.png','check-mobile.png','check-resources-mobile.png']},null,2)+'\n');
+    await writeFile(resolve(out,'check.json'),JSON.stringify({project:name,checkedAt:new Date().toISOString(),rooms:home.model.rooms.length,theme:home.theme || 'riso',errors,screenshots:['check-resources.png','check-3d.png','check-top-down.png','check-light.png','check-walk.png','check-tour.png','check-assets.png','check-mobile.png','check-resources-mobile.png']},null,2)+'\n');
     console.log(`Checked ${name}: tabs, galleries, zoom, room selection, references, top-down, cutaway, layers, lighting, furniture, assets, mobile, and local image assets.\nScreenshots: ${out}/check-*.png`);
   } finally {await browser.close();server.close();}
 }

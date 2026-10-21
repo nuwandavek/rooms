@@ -54,6 +54,21 @@ export function validateHome(home) {
   require(model.railings===undefined||Array.isArray(model.railings),'railings must be an array');
   for(const r of (Array.isArray(model.railings)?model.railings:[]))
     require(point(r.a)&&point(r.b)&&(r.a[0]!==r.b[0]||r.a[1]!==r.b[1])&&(r.height===undefined||positive(r.height)),'railings need distinct endpoints and a positive height');
+  const tour=home.tour;
+  if(tour!==undefined) {
+    const optional=(v,ok)=>v===undefined||ok(v);
+    require(tour&&typeof tour==='object'&&Array.isArray(tour.stops),'tour.json must be an object with a stops array');
+    for(const key of ['speed','hold'])require(optional(tour?.[key],positive),`tour.json: ${key} must be positive`);
+    for(const key of ['pan','pitch'])require(optional(tour?.[key],Number.isFinite),`tour.json: ${key} must be a number of degrees`);
+    for(const [i,stop] of (Array.isArray(tour?.stops)?tour.stops:[]).entries()) {
+      const label=`tour.json stops[${i}]`;
+      require(ids.has(stop?.room),`${label}: room must be a room id`);
+      require(optional(stop?.at,point),`${label}: at must be [x,z]`);
+      for(const key of ['heading','pitch','pan'])require(optional(stop?.[key],Number.isFinite),`${label}: ${key} must be a number of degrees`);
+      require(optional(stop?.hold,positive),`${label}: hold must be positive seconds`);
+      require(optional(stop?.note,v=>typeof v==='string'),`${label}: note must be text`);
+    }
+  }
   return errors;
 }
 

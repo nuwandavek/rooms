@@ -29,6 +29,7 @@ was loaded through a discovery symlink.
 | `projects/<name>/out/` | Generated HTML and checks; never edit these as source |
 | `projects/<name>/fitout.json` | Finishes (floors, wall faces and bands, doors, frames) and built-ins |
 | `projects/<name>/placements.json` | Library models positioned in the home (metres, rotation) |
+| `projects/<name>/tour.json` | Optional Guided Tour stops (room, standing point, heading, hold, note) |
 | `library/` | Shared `.glb` models by id, with provenance in `library/README.md` |
 | `kit/` | Reusable geometry, viewer, themes, commands, starter |
 
@@ -36,8 +37,11 @@ Tabs follow the stages: **1 Resources** (floor plan, room galleries, extra photo
 groups), **2 Assets** (inventory), then one shared 3D viewer as **3 Shell**,
 **4 Fit-out** (plus built-ins and finishes; `fixture` rows for now) and **5 Furnished**
 (plus loose items), with room focus, room photographs, and camera/layer/light controls.
+Visitors only see **Listing** (resources) and **3D Tour** (realistic); the top-right
+**Dev** toggle or `?dev=1` reveals the authoring tabs, and without it a stage link
+falls back to 3D Tour.
 Use `?tab=shell`, `fitout`, `furnished` or `realistic` to open a stage directly, and
-`&mode=walk` to start in Walk mode. Keep metadata in the collapsible Project details card;
+`&mode=walk` (or `tour`) to start in Walk mode (or the Guided Tour). Keep metadata in the collapsible Project details card;
 do not add promotional intro copy or a plan-orientation indicator.
 
 A home supplies data to `mount(home)`. Shared viewer code must not contain a

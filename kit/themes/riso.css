@@ -117,9 +117,15 @@ html[data-theme=riso] .all-rooms { font: 400 10px/1.5 var(--font-mono); text-dec
 html[data-theme=riso] .reference-card img { border: 2px solid var(--ink); }
 html[data-theme=riso] .reference-card figcaption { font: 500 13px/1.5 var(--font-sans); }
 html[data-theme=riso] .room-thumbnails button[aria-pressed=true] { border-color: var(--ink); background: var(--yellow); }
-html[data-theme=riso] .segmented { padding: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .segmented { padding: 0; gap: 0; border: 2px solid var(--ink); background: var(--sheet); box-shadow: 3px 3px 0 var(--ink); }
 html[data-theme=riso] .segmented button { padding: 9px 12px; font: 400 10px/1.4 var(--font-mono); }
 html[data-theme=riso] .segmented button + button { border-left: 1px solid var(--ink); }
+html[data-theme=riso] .view-toolbar .segmented button { padding: 13px 22px; font-size: 13px; }
+html[data-theme=riso] .tour-bar { border: 2px solid var(--ink); border-radius: 0; box-shadow: 3px 3px 0 var(--ink); }
+html[data-theme=riso] .tour-position { color: var(--accent); }
+html[data-theme=riso] .tour-text strong { font: 900 22px/1.1 var(--font-display); }
+html[data-theme=riso] .tour-controls button { border: 2px solid var(--ink); border-radius: 0; font: 400 11px/1.4 var(--font-mono); text-transform: uppercase; }
+html[data-theme=riso] .tour-controls #tour-play { background: var(--yellow); }
 html[data-theme=riso] :is(.segmented button.active, .light-study button[aria-pressed=true]) { background: var(--accent); color: var(--onAccent); }
 html[data-theme=riso] .settings { font: 400 10px/1.5 var(--font-mono); }
 html[data-theme=riso] .settings summary { font: 700 11px/1.5 var(--font-mono); border-color: var(--ink); }
@@ -135,6 +141,7 @@ html[data-theme=riso] dialog::backdrop { background: #1C2340b3; backdrop-filter:
   html[data-theme=riso] .compact-brand { font-size: 26px; }
   html[data-theme=riso] .tab-bar > button { font-size: 9px; padding: 0 7px; }
   html[data-theme=riso] .project-details summary { font-size: 8px; padding: 8px 6px; }
+  html[data-theme=riso] .view-toolbar .segmented button { padding: 11px 12px; font-size: 11px; }
   html[data-theme=riso] .resource-section-heading { align-items: flex-start; flex-direction: column; gap: 12px; }
   html[data-theme=riso] .resource-section-heading > span { font-size: 9px; padding: 5px 8px; }
   html[data-theme=riso] .floor-plan-preview { padding: 10px; }

@@ -274,7 +274,7 @@ h1 {
   position: absolute;
   right: 25px;
   bottom: 74px;
-  width: 188px;
+  width: 236px;
   padding: 17px;
   background: color-mix(in srgb, var(--sheet) 95%, transparent);
   border: 1px solid var(--line);
@@ -367,8 +367,15 @@ select {
   flex-direction: column;
   gap: 9px;
   pointer-events: none;
-  max-width: calc(100% - 255px);
+  max-width: calc(100% - 305px);
+  /* A light veil keeps the caption readable over the realistic render. */
+  padding: 14px 18px;
+  margin-left: -18px;
+  background: color-mix(in srgb, var(--sheet) 72%, transparent);
+  backdrop-filter: blur(6px);
+  border-radius: 3px;
 }
+.selection-info:empty { display: none; }
 .selection-info .eyebrow {
   font-size: 9px;
 }
@@ -484,14 +491,14 @@ html[data-theme=drafting] .reference-card img {
   }
   .settings {
     right: 17px;
-    width: 169px;
+    width: 212px;
     padding: 14px;
   }
   .canvas-footer > span:last-child {
     display: none;
   }
   .selection-info {
-    max-width: calc(100% - 215px);
+    max-width: calc(100% - 260px);
   }
   .selection-info strong {
     font-size: 25px;
@@ -581,7 +588,7 @@ html[data-theme=drafting] .reference-card img {
   .settings {
     right: 14px;
     bottom: 65px;
-    width: 159px;
+    width: 184px;
     padding: 13px;
   }
   .settings summary {
@@ -590,7 +597,7 @@ html[data-theme=drafting] .reference-card img {
   .selection-info {
     left: 18px;
     bottom: 80px;
-    max-width: calc(100% - 195px);
+    max-width: calc(100% - 220px);
     gap: 6px;
   }
   .selection-info strong {
@@ -1021,11 +1028,24 @@ button:disabled {
 .project-details summary::-webkit-details-marker{display:none}.project-details[open] summary span{transform:rotate(45deg)}
 .project-details-body{position:absolute;right:0;top:calc(100% + 12px);width:min(320px,calc(100vw - 32px));padding:22px;background:var(--sheet);border:1px solid var(--line);border-radius:3px}
 .project-card-title{display:flex;align-items:center;gap:18px}.project-card-title h2{font:400 24px var(--font-display,Georgia,serif);margin:0}.project-details-body>p{font:11px/1.7 var(--font-mono,monospace);color:var(--muted);margin:16px 0 22px}.project-details .metadata{padding-top:20px;border-top:1px solid var(--line);margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px}.project-details .metadata dd{font-size:30px;white-space:nowrap;display:flex;align-items:baseline;gap:6px}
+.dev-toggle{display:flex;align-items:center;gap:8px;flex-shrink:0;font:10px var(--font-mono,monospace);color:var(--muted);cursor:pointer;user-select:none}
+.viewer-bar:not(.dev) .tab-step{display:none}
 #panel-home3d{height:calc(100dvh - 56px);min-height:600px}
+.view-toolbar .segmented button{padding:13px 24px;font-size:14px}
+/* Walk always shows full-height walls and no labels, so those settings step aside. */
+.walking .settings :is(.labels-row,.wall-label,#wall-height,.range-labels){display:none}
+/* Guided tour: stop, note and controls under the mode buttons; only lighting stays in View settings. */
+.tour-bar{position:absolute;top:92px;left:28px;width:min(340px,calc(100% - 56px));padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:color-mix(in srgb,var(--sheet) 88%,transparent);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:3px}
+.tour-text{display:flex;flex-direction:column;gap:5px}.tour-position{font:9px var(--font-mono,monospace);letter-spacing:.08em;color:var(--muted)}
+.tour-text strong{font:400 20px/1.15 var(--font-display,Georgia,serif)}.tour-text p{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.tour-controls{display:flex;gap:6px}.tour-controls button{padding:8px 12px;font-size:12px;border:1px solid var(--line);background:var(--sheet);border-radius:2px;cursor:pointer}.tour-controls button:disabled{opacity:.35;cursor:default}
+.tour-controls #tour-play{flex:1}
+.touring .settings>:not(summary,.lighting-label,.light-study,.lighting-note){display:none}
+.touring #scene canvas{cursor:default}.touring :is(.selection-info,.camera-presets){display:none}
 .walking #scene canvas{cursor:grab}.walking #scene canvas:active{cursor:grabbing}.walking .selection-info{pointer-events:none;opacity:.8}.walking .canvas-footer>span:last-child{display:none}#mouse-look{width:100%;margin:14px 0;font-size:10px;justify-content:center}
 /* Theme-specific typography and components live in themes/. */
 
-@media(max-width:760px){.viewer-bar{padding:0 14px;gap:13px}.compact-brand{font-size:25px}.viewer-bar .tab-bar{gap:0}.tab-bar>button{font-size:10px}.project-details summary{font-size:8px;padding:8px;gap:6px}.project-details-body{right:0}.project-details .metadata dt{font-size:8px}#panel-home3d{height:auto;min-height:0}.view-toolbar{gap:6px}.segmented button{padding:9px 10px}.walking .canvas-footer{font-size:8px}.walking .selection-info{bottom:83px}}
+@media(max-width:760px){.viewer-bar{padding:0 14px;gap:13px}.compact-brand{font-size:25px}.viewer-bar .tab-bar{gap:0}.tab-bar>button{font-size:10px}.project-details summary{font-size:8px;padding:8px;gap:6px}.project-details-body{right:0}.project-details .metadata dt{font-size:8px}#panel-home3d{height:auto;min-height:0}.view-toolbar{gap:6px}.segmented button{padding:9px 10px}.view-toolbar .segmented button{padding:11px 14px;font-size:12px}.camera-presets{top:76px}.tour-bar{top:128px;left:16px;width:calc(100% - 32px);padding:10px 12px;gap:8px}.tour-text strong{font-size:17px}.dev-toggle{font-size:8px;gap:5px}.viewer-bar .tab-bar{min-width:0;overflow-x:auto;scrollbar-width:none}.viewer-bar.dev{flex-wrap:wrap;height:auto;min-height:56px;padding-top:10px;padding-bottom:10px;row-gap:10px}.viewer-bar.dev .tab-bar{order:1;flex:1 0 100%}.tab-bar>button{white-space:nowrap}.walking .canvas-footer{font-size:8px}.walking .selection-info{bottom:83px}}
 @media(max-width:380px){.viewer-bar{gap:9px;padding:0 10px}.project-details summary{font-size:7px;gap:4px}.compact-brand{font-size:23px}}
 /* Assets tab: inventory table grouped by room. */
 .asset-room{margin-top:44px}

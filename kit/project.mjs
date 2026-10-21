@@ -43,6 +43,9 @@ export async function loadProject(name) {
   // fitout.json, when present, adds finishes (library/materials.json) and built-ins.
   const fitout=await readFile(resolve(dir,'fitout.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
   if(fitout!==null)home=applyFitout(home,fitout,parseMaterials(await readFile(resolve(root,'library/materials.json'),'utf8')));
+  // tour.json, when present, plans the Guided Tour stops; otherwise it visits featured rooms.
+  const tour=await readFile(resolve(dir,'tour.json'),'utf8').catch(e=>{if(e.code==='ENOENT')return null;throw e;});
+  if(tour!==null){try{home={...home,tour:JSON.parse(tour)};}catch(e){throw new Error(`tour.json: ${e.message}`);}}
   const errors=validateHome(home);
   if(errors.length)throw new Error(errors.join('\n'));
   const realDir=await realpath(dir),images={};

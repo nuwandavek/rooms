@@ -31,18 +31,19 @@ export function markup(home) {
   return `<div class="viewer-bar">
     <a class="brand compact-brand" data-text="rooms." href="#" aria-label="rooms. home resources">rooms.</a>
     <div class="tab-bar" role="tablist" aria-label="Project views">
-      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources"><span class="tab-step">1.</span>Resources</button>
-      <button id="tab-assets" role="tab" aria-selected="false" aria-controls="panel-assets" tabindex="-1"><span class="tab-step">2.</span>Assets</button>
-      <button id="tab-shell" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Walls, rooms and openings"><span class="tab-step">3.</span>Shell</button>
-      <button id="tab-fitout" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
-      <button id="tab-furnished" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
-      <button id="tab-realistic" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="The furnished home with realistic lighting and materials"><span class="tab-step">6.</span>Realistic</button>
+      <button id="tab-resources" role="tab" aria-selected="true" aria-controls="panel-resources"><span class="tab-step">1.</span>Listing</button>
+      <button id="tab-assets" data-dev role="tab" aria-selected="false" aria-controls="panel-assets" tabindex="-1"><span class="tab-step">2.</span>Assets</button>
+      <button id="tab-shell" data-dev role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Walls, rooms and openings"><span class="tab-step">3.</span>Shell</button>
+      <button id="tab-fitout" data-dev role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Shell plus built-ins and finishes: counters, wardrobes, sanitaryware, floors, skirting"><span class="tab-step">4.</span>Fit-out</button>
+      <button id="tab-furnished" data-dev role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="Fit-out plus loose furniture, lighting and decor"><span class="tab-step">5.</span>Furnished</button>
+      <button id="tab-realistic" role="tab" aria-selected="false" aria-controls="panel-home3d" tabindex="-1" title="The furnished home with realistic lighting and materials"><span class="tab-step">6.</span>3D Tour</button>
     </div>
     <details class="project-details"><summary>Project details <span>＋</span></summary><div class="project-details-body">
       <div class="project-card-title"><span class="brand-mark">${escape(home.mark || 'h.')}</span><h2>${escape(home.brand || home.title)}</h2></div>
       <p>${escape(home.location)}</p>
       <dl class="metadata">${stats.map(s=>`<div><dt>${escape(s.label)}</dt><dd>${escape(s.value)} <small>${escape(s.unit)}</small></dd></div>`).join('')}</dl>
     </div></details>
+    <label class="dev-toggle" title="Show the authoring tabs: Assets, Shell, Fit-out and Furnished">Dev<input id="dev-toggle" type="checkbox"></label>
   </div>
   <section id="panel-resources" class="resources-panel" role="tabpanel" aria-labelledby="tab-resources" tabindex="0">
     <section class="resource-section"><div class="resource-section-heading"><h1>Floor plan</h1><span>01 / THE PLAN</span></div>
@@ -65,25 +66,28 @@ export function markup(home) {
         <figure class="reference-card"><button id="enlarge-room-photo" aria-label="Enlarge room photo" hidden><img id="room-photo" alt="" hidden></button><div id="no-photo" class="no-photo">No reference photos for this room.</div><figcaption><span id="photo-label"></span><span id="photo-position"></span></figcaption></figure>
         <div id="room-thumbnails" class="room-thumbnails" aria-label="Room photographs"></div>
       </section>
-      <button id="browse-resources" class="all-rooms">Browse all resources ↗</button>
+      <button id="browse-resources" class="all-rooms">Browse the listing ↗</button>
     </aside>
     <section class="viewport" aria-label="Interactive home model">
       <div id="scene"></div><div id="labels"></div><div id="lock-hint" class="lock-hint" role="status" hidden>Mouse look · Press <kbd>Esc</kbd> to exit</div>
-      <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">3D</button><button id="walk-button" aria-pressed="false">Walk</button></div></div>
+      <div class="view-toolbar"><div class="segmented" aria-label="Camera mode"><button id="orbit-button" class="active" aria-pressed="true">Isometric View</button><button id="walk-button" aria-pressed="false">Free Walk</button><button id="tour-button" aria-pressed="false">Guided Tour</button></div></div>
       <div class="segmented camera-presets" id="camera-presets" role="group" aria-label="Camera"><button id="reset-camera" title="Whole home, default camera">↺ Reset</button><button id="top-view">Top-down</button></div>
       <details class="settings" open><summary>View settings <span>＋</span></summary>
         <button id="mouse-look" class="quiet-button" aria-pressed="false" hidden>Mouse look ↗</button>
         <div class="zoom-controls" role="group" aria-label="Zoom"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-output" aria-label="Zoom level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button></div>
-        <label class="switch-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
+        <label class="switch-row labels-row">Room labels<input id="labels-toggle" type="checkbox" checked></label>
         <label class="switch-row">Doors closed<input id="doors-closed" type="checkbox"></label>
         <div class="wall-label"><label for="wall-height">Wall cutaway</label><output id="height-output"></output></div>
         <input id="wall-height" aria-label="Visible wall height" type="range" min="0.15" max="${home.model.wallHeight}" step="0.05" value="${home.model.cutaway}">
         <div class="range-labels"><span>LOW</span><button id="full-height">Full height ↗</button></div>
         <div class="lighting-label" id="lighting-label">Light study</div><div class="segmented light-study" role="group" aria-labelledby="lighting-label"><button id="light-day" aria-pressed="true">☀ Day</button><button id="light-night" aria-pressed="false">☾ Night</button></div>
-        <button id="reset-settings" class="quiet-button">↺ Reset settings</button>
         <small class="lighting-note">Illustrative lighting</small>
       </details>
       <div class="selection-info" id="selection-info" aria-live="polite"></div>
+      <div id="tour-bar" class="tour-bar" role="group" aria-label="Guided tour" hidden>
+        <div class="tour-text"><span id="tour-position" class="tour-position"></span><strong id="tour-room"></strong><p id="tour-note" hidden></p></div>
+        <div class="tour-controls"><button id="tour-previous" aria-label="Previous stop">‹</button><button id="tour-play"></button><button id="tour-next" aria-label="Next stop">›</button></div>
+      </div>
       <footer class="canvas-footer"><span id="navigation-help">Drag to orbit <b>·</b> Scroll to zoom <b>·</b> Right-drag to pan</span><span>Metres / approximate geometry</span></footer>
       <div id="error" role="alert" hidden></div>
     </section>
@@ -95,15 +99,23 @@ export function markup(home) {
 // Resources and dialogs work even when WebGL is unavailable.
 // Tabs follow the authoring stages. Shell, Fit-out and Furnished share the 3D panel and
 // add layers left to right; `onStage` tells the viewer which one is showing.
+// Dev mode (the top-right toggle, remembered per browser, or ?dev=1) shows the authoring
+// tabs; otherwise only Listing (resources) and 3D Tour (realistic) are offered.
 export const STAGES=['shell','fitout','furnished','realistic'];
 export function setupUI(home,target,onRoom,onStage=()=>{}) {
   const get=id=>target.querySelector(`#${id}`);
   let tab='resources',stage='furnished';
   const tabs=['resources','assets',...STAGES];
   const panel=key=>STAGES.includes(key)?'home3d':key;
+  const params=new URLSearchParams(location.search);
+  let dev=params.has('dev')?params.get('dev')!=='0':false;
+  if(!params.has('dev'))try{dev=localStorage.getItem('home3d-dev')==='1';}catch{/* Storage may be blocked. */}
+  const visibleTabs=()=>dev?tabs:['resources','realistic'];
   let previewsStarted=false;
   function setTab(name,updateURL=true) {
     if(name==='home3d')name=stage;  // Older links and the room buttons open the last 3D stage.
+    if(!dev&&name==='assets')name='resources';
+    else if(!dev&&STAGES.includes(name))name='realistic';
     tab=tabs.includes(name)?name:'resources';
     for(const key of ['resources','assets','home3d'])get(`panel-${key}`).hidden=key!==panel(tab);
     for(const key of tabs) {
@@ -117,14 +129,28 @@ export function setupUI(home,target,onRoom,onStage=()=>{}) {
       try{history.replaceState(null,'',url);}catch{/* Some file:// viewers disallow history updates. */}
     }
   }
-  for(const [i,key] of tabs.entries()) {
+  for(const key of tabs) {
     const button=get(`tab-${key}`);button.onclick=()=>setTab(key);
     button.onkeydown=e=>{
       if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
-      e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowLeft'?tabs.length-1:1))%tabs.length;
-      setTab(tabs[next]);get(`tab-${tabs[next]}`).focus();
+      const shown=visibleTabs(),i=shown.indexOf(key);
+      e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?shown.length-1:(i+(e.key==='ArrowLeft'?shown.length-1:1))%shown.length;
+      setTab(shown[next]);get(`tab-${shown[next]}`).focus();
     };
   }
+  function setDev(on) {
+    dev=on;get('dev-toggle').checked=on;
+    target.querySelector('.viewer-bar').classList.toggle('dev',on);
+    target.querySelectorAll('[data-dev]').forEach(el=>el.hidden=!on);
+  }
+  get('dev-toggle').onchange=e=>{
+    setDev(e.target.checked);
+    try{localStorage.setItem('home3d-dev',dev?'1':'0');}catch{/* Storage may be blocked. */}
+    const url=new URL(location.href);url.searchParams.delete('dev');
+    try{history.replaceState(null,'',url);}catch{/* Some file:// viewers disallow history updates. */}
+    setTab(tab);
+  };
+  setDev(dev);
   get('browse-resources').onclick=()=>{setTab('resources');get('tab-resources').focus();};
   target.querySelector('.brand').onclick=e=>{e.preventDefault();setTab('resources');};
   const plan=get('plan-dialog'),photo=get('photo-dialog');
@@ -157,6 +183,6 @@ export function setupUI(home,target,onRoom,onStage=()=>{}) {
     });
   }
   target.querySelectorAll('[data-focus-room]').forEach(button=>button.onclick=()=>{setTab('home3d');onRoom(button.dataset.focusRoom);get(`tab-${tab}`).focus();});
-  setTab(new URLSearchParams(location.search).get('tab'),false);
+  setTab(params.get('tab'),false);
   return {setTab,showPhoto,get tab(){return tab;},get in3d(){return STAGES.includes(tab);},get stage(){return stage;}};
 }

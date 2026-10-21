@@ -66,6 +66,25 @@ Positions outside the room polygon and more instances than the row's Qty are bui
 errors. Items whose `y` is above the wall cutaway are hidden with the wall. Furniture
 does not yet block Walk mode.
 
+## tour.json
+
+Optional. Plans **Guided Tour** (kit/tour.js); without it the tour visits every
+`featured` room in model order. The viewer walks between stops along a route it finds
+around walls and through doors, so list only the stops.
+
+```json
+{"speed": 1, "hold": 10, "pan": 300, "pitch": -4,
+ "stops": [{"room": "kitchen", "at": [11.15, 0.45], "heading": 0, "pitch": -12, "hold": 8, "pan": 300, "note": "…"}]}
+```
+
+Top-level `speed` (m/s), `hold` (seconds per stop), `pan` and `pitch` (degrees) are
+defaults; each stop may override `hold`, `pan` and `pitch`. `room` is required. `at` is
+the standing point in plan metres (default: the room's Walk spawn point). `heading` is
+where the pan starts (default: the direction you walked in); the pan turns whichever way
+ends nearer the next stop. Headings and pitches use Walk's `&cam=x,z,heading,pitch`
+convention, so a view found in Free Walk can be copied from the URL. `note` is shown in
+the tour panel.
+
 ## fitout.json
 
 Everything fixed to the shell, shown on the Fit-out and Furnished tabs (Shell stays

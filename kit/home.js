@@ -7,7 +7,8 @@ import {buildBuiltins} from './builtins.js';
 import {createRealistic} from './realistic.js';
 import { createShell, planShape } from './geometry.js';
 import { applyTheme } from './themes.js';
-import {createWalk} from './walk.js';
+import {createWalk,inside} from './walk.js';
+import {createTour} from './tour.js';
 
 import {escape,markup,setupUI,roomPhotos} from './ui.js';
 
@@ -46,6 +47,9 @@ export function mount(home, target=document.body) {
   renderer.toneMappingExposure=theme.light.exposure;
   host.append(renderer.domElement);
   const walk=createWalk(model,renderer.domElement);
+  // Guided tour drives the walk camera; Walk's own controls pause while it runs.
+  let touring=false;
+  const tour=createTour({model,spec:home.tour,space:walk.space,camera:walk.camera,onChange:()=>updateTourBar()});
   const camera=new THREE.OrthographicCamera(-10,10,10,-10,.1,500);
   walk.camera.layers.enable(1);camera.layers.enable(1);  // Layer 1 holds the city outside (kept out of mirrors).
   const controls=new OrbitControls(camera,renderer.domElement);
@@ -113,16 +117,29 @@ export function mount(home, target=document.body) {
       fromPosition:camera.position.clone(),toPosition:targetPoint.clone().add(view==='top'?planOffset:orbitOffset),
       fromZoom:camera.zoom,toZoom:zoom};
   }
+  function caption(room) {
+    get('selection-info').innerHTML=room
+      ?`<span class="eyebrow">${room.featured?'A closer look':'Supporting space'}</span><strong>${escape(room.name)}</strong><span>${escape(room.dimension || 'Dimensions not recorded')}</span>`
+      :'<strong>The whole home</strong><span>Select a room to take a closer look.</span>';
+  }
+  // While walking, the caption, room list and photographs follow the room you stand in.
+  let walkRoom=null;
+  function followWalk() {
+    const p=walk.camera.position,room=model.rooms.find(r=>inside([p.x,p.z],r.polygon));
+    if(!room||room.id===walkRoom)return;
+    walkRoom=room.id;caption(room);photo(room);
+    for(const [key,button] of buttons){button.classList.toggle('active',key===room.id);button.setAttribute('aria-pressed',String(key===room.id));}
+  }
   function select(id) {
+    if(touring)setTouring(false);  // Picking a room takes over from the tour.
     const room=model.rooms.find(r=>r.id===id);
     selected=room?.id || null;shell.select(selected);invalidate();
     for(const [key,button] of buttons){button.classList.toggle('active',key===selected);button.setAttribute('aria-pressed',String(key===selected));}
     for(const [key,label] of labels)label.classList.toggle('active',key===selected);
+    caption(room);walkRoom=room?.id ?? null;
     if(room) {
-      get('selection-info').innerHTML=`<span class="eyebrow">${room.featured?'A closer look':'Supporting space'}</span><strong>${escape(room.name)}</strong><span>${escape(room.dimension || 'Dimensions not recorded')}</span>`;
       if(mode==='walk')walk.enter(room);else move(new THREE.Vector3(room.center[0],0,room.center[1]),1.65);photo(room);
     } else {
-      get('selection-info').innerHTML='<strong>The whole home</strong><span>Select a room to take a closer look.</span>';
       // Walk starts at the home's walkStart view ([x,z,heading,pitch], as in ?cam=) when it has one.
       const start=home.walkStart?.map(Number);
       if(mode==='walk')start?walk.place([start[0],start[1]],THREE.MathUtils.degToRad(start[2]),THREE.MathUtils.degToRad(start[3])):walk.enter(defaultPhoto);
@@ -157,7 +174,11 @@ export function mount(home, target=document.body) {
     shell.openings.traverse(o=>{if(o.userData.doorLeaf)o.rotation.y=closed?0:-Math.PI*.4;});invalidate(true);
   }
   function setMode(value) {
-    if(!['orbit','walk'].includes(value))return;
+    if(!['orbit','walk','tour'].includes(value))return;
+    // Tour and Free Walk share the walk camera: switching between them keeps your place.
+    if(mode==='walk'&&value!=='orbit'){setTouring(value==='tour');return;}
+    if(touring&&value==='orbit')setTouring(false);
+    const startTour=value==='tour';if(startTour)value='walk';
     mode=value;transition=null;controls.enabled=mode!=='walk';
     ceiling.visible=mode==='walk';updateBackdrop();invalidate();
     walk.setActive(mode==='walk');
@@ -167,13 +188,38 @@ export function mount(home, target=document.body) {
     get('full-height').disabled=mode==='walk';
     get('navigation-help').textContent=mode==='walk'?'Click the floor to walk · Drag to look · WASD / arrows to move · Q E to turn · Scroll to step':'Drag to orbit · Scroll to zoom · Right-drag to pan';
     target.querySelector('.viewport').classList.toggle('walking',mode==='walk');
-    for(const key of ['orbit','walk']) {get(`${key}-button`).classList.toggle('active',mode===key);get(`${key}-button`).setAttribute('aria-pressed',String(mode===key));}
     updateHeight();select(selected);
-    // Keep the mode in the URL (?mode=3d or ?mode=walk) next to ?tab=, for sharing a view.
-    const url=new URL(location.href);url.searchParams.set('mode',mode==='walk'?'walk':'3d');
-    if(mode!=='walk')url.searchParams.delete('cam');
+    if(startTour)setTouring(true);else updateModeButtons();
+  }
+  function updateModeButtons() {
+    const current=touring?'tour':mode;
+    for(const key of ['orbit','walk','tour']) {get(`${key}-button`).classList.toggle('active',current===key);get(`${key}-button`).setAttribute('aria-pressed',String(current===key));}
+    get('mouse-look').hidden=mode!=='walk'||touring;get('tour-bar').hidden=!touring;
+    target.querySelector('.viewport').classList.toggle('touring',touring);
+    if(mode==='walk')get('navigation-help').textContent=touring?'Guided tour · Pause or skip below · Free Walk takes over from here':'Click the floor to walk · Drag to look · WASD / arrows to move · Q E to turn · Scroll to step';
+    // Keep the mode in the URL (?mode=3d, walk or tour) next to ?tab=, for sharing a view.
+    const url=new URL(location.href);url.searchParams.set('mode',touring?'tour':mode==='walk'?'walk':'3d');
+    if(mode!=='walk'||touring)url.searchParams.delete('cam');
     try{history.replaceState(null,'',url);}catch{/* Some file:// viewers disallow history updates. */}
   }
+  function setTouring(on) {
+    touring=on;
+    if(on){walk.setActive(false);tour.start();}else tour.stop();
+    updateModeButtons();updateTourBar();invalidate();
+  }
+  function updateTourBar() {
+    const stop=tour.stops[tour.index];if(!stop)return;
+    get('tour-position').textContent=`${String(tour.index+1).padStart(2,'0')} / ${String(tour.stops.length).padStart(2,'0')}`;
+    get('tour-room').textContent=tour.phase==='travel'?`On the way to ${stop.room?.name || 'the next stop'}`:stop.room?.name || '';
+    get('tour-note').textContent=tour.phase==='travel'?'':stop.note;get('tour-note').hidden=!get('tour-note').textContent;
+    const done=tour.phase==='done';
+    get('tour-play').textContent=done?'↺ Replay':tour.playing?'❚❚ Pause':'▶ Play';
+    get('tour-play').setAttribute('aria-label',done?'Replay the tour':tour.playing?'Pause the tour':'Resume the tour');
+    get('tour-previous').disabled=tour.index===0;get('tour-next').disabled=tour.index>=tour.stops.length-1;
+  }
+  get('tour-button').onclick=()=>setMode('tour');
+  get('tour-play').onclick=()=>tour.toggle();
+  get('tour-previous').onclick=()=>tour.previous();get('tour-next').onclick=()=>tour.next();
   // Walk mode looks out at a generated city under a gradient sky; the overview keeps the
   // plain paper background and ground.
   const surroundings=createSurroundings({center,storey:home.storey ?? 3,style:home.surroundings || 'city',models:home.cityModels});scene.add(surroundings.group);
@@ -217,13 +263,6 @@ export function mount(home, target=document.body) {
   get('labels-toggle').onchange=e=>get('labels').hidden=!e.target.checked;
   // Door leaves are drawn open; closing them is visual only (Walk still passes through).
   get('doors-closed').onchange=()=>updateDoors();
-  get('reset-settings').onclick=()=>{
-    for(const [id,checked] of [['labels-toggle',true],['doors-closed',false]]) {
-      get(id).checked=checked;get(id).dispatchEvent(new Event('change'));
-    }
-    get('wall-height').value=model.cutaway;updateHeight();
-    setLighting(home.lighting || 'day');
-  };
   // Placed items: library models (each file loads once, cloned per placement, fitted to
   // the inventory row's Dims and tinted toward its Colour) or primitives built from Dims.
   const furniture=new THREE.Group();furniture.name='Furniture';scene.add(furniture);
@@ -313,9 +352,10 @@ export function mount(home, target=document.body) {
   function render(now) {
     frame=requestAnimationFrame(render);
     const dt=(now-previousTime)/1000;previousTime=now;
-    walk.setActive(mode==='walk'&&ui.in3d&&!target.querySelector('dialog[open]')&&!document.hidden);
+    walk.setActive(mode==='walk'&&!touring&&ui.in3d&&!target.querySelector('dialog[open]')&&!document.hidden);
     if(!ui.in3d)return;
-    if(mode==='walk'){walk.update(dt);shareWalkView(now);draw(walk.camera);return;}
+    if(mode==='walk'&&touring){if(!target.querySelector('dialog[open]'))tour.update(dt);followWalk();draw(walk.camera);return;}
+    if(mode==='walk'){walk.update(dt);followWalk();shareWalkView(now);draw(walk.camera);return;}
     if(transition) {
       const t=Math.min((now-transition.start)/(matchMedia('(prefers-reduced-motion: reduce)').matches?1:650),1),ease=1-(1-t)**3;
       camera.position.lerpVectors(transition.fromPosition,transition.toPosition,ease);
@@ -360,7 +400,8 @@ export function mount(home, target=document.body) {
   updateHeight();setLighting(home.lighting || 'day');select(null);frame=requestAnimationFrame(render);
   // ?mode=walk&cam=x,z,heading,pitch reopens a shared Walk view (heading/pitch in degrees).
   const params=new URLSearchParams(location.search);
-  if(params.get('mode')==='walk') {
+  if(params.get('mode')==='tour')setMode('tour');
+  else if(params.get('mode')==='walk') {
     setMode('walk');
     const cam=(params.get('cam') || '').split(',').map(Number);
     if(cam.length===4&&cam.every(Number.isFinite))walk.place([cam[0],cam[1]],THREE.MathUtils.degToRad(cam[2]),THREE.MathUtils.degToRad(cam[3]));

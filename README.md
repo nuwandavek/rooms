@@ -75,8 +75,10 @@ to `kit/home` from any directory, or use `npm run home -- <command> <name>`.
 
 ## Viewer tabs
 
-Tabs are numbered by authoring stage: **1 Resources**, **2 Assets**, **3 Shell**,
-**4 Fit-out**, **5 Furnished**.
+Visitors see two tabs: **Listing** (the resources) and **3D Tour** (the Realistic
+stage). The **Dev** toggle at top right (off by default, remembered per browser, or
+`?dev=1`) shows every tab, numbered by authoring stage: **1 Listing** (resources),
+**2 Assets**, **3 Shell**, **4 Fit-out**, **5 Furnished**, **6 3D Tour** (realistic).
 
 **Resources** opens first: the floor plan, room photo galleries, and other source
 images. Click any image to enlarge it, or use **View in 3D** to focus its room.
@@ -85,7 +87,7 @@ viewer and add layers left to right: walls, rooms and openings; then the project
 `fitout.json` (floor, wall, door and frame finishes from `library/materials.json`,
 built-ins such as kitchen counters) plus placed `fixture` rows; then loose furniture,
 lighting and decor. The viewer keeps the room
-list, selected-room photos and thumbnails beside the model, with **3D** and **Walk** modes at top left and **↺ Reset** / **Top-down** cameras at
+list, selected-room photos and thumbnails beside the model, with **Isometric View**, **Free Walk** and **Guided Tour** modes at top left and **↺ Reset** / **Top-down** cameras at
 top right. View settings includes zoom −/+, wall cutaway, layers and lighting.
 The project name, location, bedrooms and floor area live in the collapsible
 **Project details** card at the top right.
@@ -99,9 +101,14 @@ controls. Walls, windows, railings, voids and slab edges block movement; doorway
 and open sliding doors are passable. Room buttons jump to that room. Walk uses
 full-height walls; switching back to 3D restores the cutaway setting.
 
+**Guided Tour** walks the same camera from room to room, making one slow pan at each
+stop, with pause, previous and next controls. Stops come from the project's optional
+`tour.json` (see `kit/model.md`); without it the tour visits every featured room.
+**Free Walk** takes over from wherever the tour is.
+
 To open a stage directly, visit `http://127.0.0.1:4173/?tab=shell` (or `fitout`,
-`furnished`, `realistic`; `?tab=home3d` opens the last 3D stage). Add `&mode=walk` to
-start in Walk mode (`&mode=3d` is the default); the URL keeps both as you switch. In
+`furnished`, `realistic`; `?tab=home3d` opens the last 3D stage). Add `&mode=walk` (or `&mode=tour`) to
+start in Walk mode (or the tour) (`&mode=3d` is the default); the URL keeps both as you switch. In
 Walk mode it also keeps `&cam=x,z,heading,pitch`, so copying the address shares the exact view.
 
 ## Assets tab and model library
@@ -156,6 +163,7 @@ projects/
   kalpataru-radiance/
     brief.md / plan.md        Intent, evidence, assumptions
     resources.md              Resources tab galleries and image provenance
+    tour.json                 Optional Guided Tour stops
     inventory.md              Assets tab: furniture and fittings per room
     home.js                   This home's model and presentation data
     index.html                Page template used by the build
