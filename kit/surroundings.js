@@ -176,8 +176,10 @@ export function createSurroundings({center,storey=3,style='city',seed=7,models={
   function load() {
     if(loading)return loading;
     const wanted=[...new Set(items.map(item=>item[0]))].filter(id=>models[id]);
-    const loader=new GLTFLoader();
-    loading=Promise.all(wanted.map(id=>loader.loadAsync(models[id]).then(g=>[id,g.scene]).catch(()=>null))).then(results=>{
+    const loader=new GLTFLoader(new THREE.LoadingManager());
+    loading=Promise.all(wanted.map(id=>loader.loadAsync(models[id]).then(g=>[id,g.scene]).catch(()=>null))).then(async results=>{
+      let sliceStart=performance.now();
+      const yieldWork=()=>new Promise(resolve=>setTimeout(()=>{sliceStart=performance.now();resolve();},0));
       const scenes=Object.fromEntries(results.filter(Boolean));
       const byModel=new Map();
       const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0);
@@ -193,8 +195,8 @@ export function createSurroundings({center,storey=3,style='city',seed=7,models={
       const world=new THREE.Matrix4();
       for(const [id,matrices] of byModel) {
         scenes[id].updateMatrixWorld(true);
-        scenes[id].traverse(o=>{
-          if(!o.isMesh||Array.isArray(o.material))return;
+        const parts=[];scenes[id].traverse(o=>{if(o.isMesh&&!Array.isArray(o.material))parts.push(o);});
+        for(const o of parts) {
           const base=o.geometry;
           for(const matrix of matrices) {
             const x=matrix.elements[12],z=matrix.elements[14];
@@ -216,8 +218,9 @@ export function createSurroundings({center,storey=3,style='city',seed=7,models={
             g.setAttribute('color',new THREE.BufferAttribute(colours,3));
             g.applyMatrix4(world.multiplyMatrices(matrix,o.matrixWorld));
             chunk.geometries.push(g);
+            if(performance.now()-sliceStart>8)await yieldWork();
           }
-        });
+        }
       }
       const materials=new Map();
       for(const {material,look,geometries} of chunks.values()) {
@@ -231,6 +234,7 @@ export function createSurroundings({center,storey=3,style='city',seed=7,models={
         }
         const mesh=new THREE.Mesh(merged,materials.get(look));
         mesh.layers.set(1);mesh.renderOrder=10;mesh.matrixAutoUpdate=false;group.add(mesh);
+        if(performance.now()-sliceStart>8)await yieldWork();
       }
       return true;
     });

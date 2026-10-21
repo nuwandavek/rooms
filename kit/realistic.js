@@ -13,6 +13,8 @@ import {Reflector} from 'three/addons/objects/Reflector.js';
 export function createRealistic({renderer,scene,home,lights,furniture}) {
   let on=false,night=false,baked=false,environment=null,size=[1,1];
   const composers=new Map();  // One per camera: GTAO is built for one projection type.
+  const prepared=new WeakSet();
+  const uploaded=new WeakSet();
   const saved={};
 
   // Soft shadow pads under floor-standing items, sized to each footprint.
@@ -107,6 +109,38 @@ export function createRealistic({renderer,scene,home,lights,furniture}) {
   }
   return {
     get on(){return on;},enable,pads,lamps,
+    async prepare(camera) {
+      const c=composer(camera),target=renderer.getRenderTarget(),tasks=[];
+      const geometry=new THREE.PlaneGeometry(2,2);
+      try {
+        // RenderPass draws into a linear HDR target, not directly to the screen.
+        renderer.setRenderTarget(c.readBuffer);
+        tasks.push(renderer.compileAsync(scene,camera));
+        if(!prepared.has(c)) {
+          for(const pass of c.passes)for(const material of Object.values(pass).filter(v=>v?.isMaterial)) {
+            if(pass instanceof OutputPass) {
+              material.defines={SRGB_TRANSFER:'',NEUTRAL_TONE_MAPPING:''};
+              renderer.setRenderTarget(null);
+            } else renderer.setRenderTarget(c.readBuffer);
+            const group=new THREE.Scene();group.add(new THREE.Mesh(geometry,material));
+            tasks.push(renderer.compileAsync(group,camera));
+          }
+          prepared.add(c);
+        }
+      } finally {renderer.setRenderTarget(target);}
+      try {await Promise.all(tasks);} finally {geometry.dispose();}
+      // GPU uploads are synchronous too. Spread first-use furniture textures over
+      // short tasks instead of uploading the entire home in one render call.
+      const textures=new Set();
+      scene.traverseVisible(o=>{for(const material of [o.material].flat().filter(Boolean))for(const value of Object.values(material)) {
+        if(value?.isTexture&&!value.isRenderTargetTexture&&value.image&&!uploaded.has(value))textures.add(value);
+      }});
+      let sliceStart=performance.now();
+      for(const texture of textures) {
+        renderer.initTexture(texture);uploaded.add(texture);
+        if(performance.now()-sliceStart>8){await new Promise(resolve=>setTimeout(resolve,0));sliceStart=performance.now();}
+      }
+    },
     setBaked(value){baked=value;for(const c of composers.values())for(const pass of c.passes)if(pass instanceof GTAOPass)pass.blendIntensity=baked?.15:.75;},
     render(camera){frameId++;composer(camera).render();},
     addMirrors(){if(on){addMirrors();}},

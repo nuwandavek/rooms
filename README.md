@@ -133,6 +133,14 @@ the command without `--draft` for a 4096² atlas with 128 samples (draft: 2048²
 Set `BLENDER=/path/to/blender` if Blender is not in the standard application path.
 Refresh the viewer and choose **3D Tour (Improved Lighting)** to inspect the result.
 
+Models and the selected lightmap download concurrently. EXR decoding runs in an
+embedded worker, and the other day/night map loads only when selected; both are
+cached for the lifetime of the viewer. The original 4K HDR pixels are preserved.
+Shaders prepare asynchronously and texture uploads yield between batches. The
+outdoor city builds in short background tasks, while room reflections refine
+progressively after the interior is usable, starting with the current room.
+The baked walkthrough hides **Doors closed**, since its door geometry is fixed.
+
 The bake includes diffuse direct light, bounced light and furniture shadows.
 Overlapping structural wall boxes are united before baking, and the ceiling is
 clipped to their inner faces. Lightmap borders are rebuilt from interior texels to

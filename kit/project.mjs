@@ -104,6 +104,7 @@ export async function loadProject(name) {
 export async function buildProject(name) {
   const {build}=await import('esbuild');
   const {dir,home,images,models}=await loadProject(name);
+  const worker=home.baked?await build({entryPoints:[resolve(root,'kit/exr-worker.js')],bundle:true,format:'iife',minify:true,write:false}):null;
   // Images stay as files; rewrite project-relative paths to be relative to out/.
   const entry=`import {mount} from './kit/home.js';
     const home=${JSON.stringify(home)}, images=${JSON.stringify(images)}, models=${JSON.stringify(models)};
@@ -117,7 +118,7 @@ export async function buildProject(name) {
     for(const placement of home.placements || []){placement.modelUrl=models[placement.model];if(placement.art)placement.art=images[placement.art];if(placement.realistic)placement.realisticUrl=models[placement.realistic];}
     window.home3d=mount(home);`;
   const result=await build({stdin:{contents:entry,
-    resolveDir:root,sourcefile:'home-entry.js',loader:'js'},bundle:true,format:'iife',minify:true,write:false,legalComments:'inline'});
+    resolveDir:root,sourcefile:'home-entry.js',loader:'js'},bundle:true,format:'iife',minify:true,write:false,legalComments:'inline',define:{__HOME3D_EXR_WORKER__:JSON.stringify(worker?.outputFiles[0].text || '')}});
   let css=await readFile(resolve(root,'kit/home.css'),'utf8');
   if((home.theme || 'riso')==='riso')css+='\n'+await readFile(resolve(root,'kit/themes/riso.css'),'utf8');
   let html=await readFile(resolve(dir,'index.html'),'utf8');
